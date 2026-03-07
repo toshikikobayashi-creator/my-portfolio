@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小麦の丘 - こだわりのパン屋</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      background: linear-gradient(135deg, #d4a574 0%, #f5e6d3 100%);
+      min-height: 100vh;
+      color: #4a3728;
+    }
+
+    /* ========== ヒーローセクション ========== */
+    .hero {
+      background: linear-gradient(135deg, #6b4226 0%, #8b5e3c 50%, #a0714f 100%);
+      color: #fff;
+      text-align: center;
+      padding: 80px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 20%, rgba(255,255,255,0.06) 0%, transparent 50%);
+    }
+
+    .hero-content {
+      position: relative;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .hero-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      margin-bottom: 12px;
+      letter-spacing: 8px;
+      font-weight: bold;
+    }
+
+    .hero .subtitle {
+      font-size: 16px;
+      opacity: 0.9;
+      letter-spacing: 4px;
+      margin-bottom: 24px;
+    }
+
+    .hero .catchcopy {
+      font-size: 20px;
+      opacity: 0.95;
+      line-height: 1.8;
+      font-weight: 300;
+    }
+
+    /* ========== 共通セクション ========== */
+    .section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 20px;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 28px;
+      color: #6b4226;
+      margin-bottom: 8px;
+      letter-spacing: 4px;
+    }
+
+    .section-subtitle {
+      text-align: center;
+      font-size: 14px;
+      color: #a08060;
+      margin-bottom: 40px;
+      letter-spacing: 2px;
+    }
+
+    .section-divider {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, #d4a574, #8b5e3c);
+      margin: 0 auto 40px;
+      border-radius: 2px;
+    }
+
+    /* ========== こだわりポイント ========== */
+    .features {
+      background: #fff;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+
+    .feature-card {
+      background: #fdf8f3;
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(107, 66, 38, 0.08);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(107, 66, 38, 0.15);
+    }
+
+    .feature-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .feature-card h3 {
+      font-size: 18px;
+      color: #6b4226;
+      margin-bottom: 12px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: #7a6a5a;
+      line-height: 1.8;
+    }
+
+    /* ========== おすすめメニュー ========== */
+    .menu {
+      background: linear-gradient(180deg, #f5e6d3 0%, #fdf8f3 100%);
+    }
+
+    .menu-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .menu-item {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(107, 66, 38, 0.08);
+      padding: 24px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .menu-item:hover {
+      transform: translateX(4px);
+      box-shadow: 0 6px 24px rgba(107, 66, 38, 0.12);
+    }
+
+    .menu-item-info {
+      flex: 1;
+    }
+
+    .menu-item-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #6b4226;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .menu-item-badge {
+      background: linear-gradient(135deg, #d4a574, #c4956a);
+      color: #fff;
+      font-size: 11px;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+
+    .menu-item-desc {
+      font-size: 14px;
+      color: #7a6a5a;
+      line-height: 1.6;
+    }
+
+    .menu-item-price {
+      font-size: 22px;
+      font-weight: bold;
+      color: #8b5e3c;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .menu-item-price span {
+      font-size: 14px;
+      font-weight: normal;
+    }
+
+    /* ========== 店舗情報 ========== */
+    .shop-info {
+      background: #fff;
+    }
+
+    .info-card {
+      background: #fdf8f3;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(107, 66, 38, 0.08);
+      overflow: hidden;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .info-card-header {
+      background: linear-gradient(135deg, #6b4226, #8b5e3c);
+      color: #fff;
+      text-align: center;
+      padding: 24px 20px;
+      font-size: 20px;
+      letter-spacing: 4px;
+    }
+
+    .info-table {
+      padding: 32px;
+    }
+
+    .info-row {
+      display: flex;
+      padding: 14px 0;
+      border-bottom: 1px solid #efe5da;
+      gap: 16px;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      font-weight: bold;
+      color: #8b5e3c;
+      min-width: 100px;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    .info-value {
+      color: #5a4a3a;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ========== お問い合わせ・SNS ========== */
+    .contact {
+      background: linear-gradient(135deg, #6b4226 0%, #8b5e3c 100%);
+      color: #fff;
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .contact .section-title {
+      color: #fff;
+    }
+
+    .contact .section-subtitle {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .contact .section-divider {
+      background: linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.8), rgba(255,255,255,0.3));
+    }
+
+    .contact-text {
+      font-size: 15px;
+      line-height: 1.8;
+      opacity: 0.9;
+      margin-bottom: 32px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .contact-info-line {
+      font-size: 16px;
+      margin-bottom: 8px;
+      opacity: 0.95;
+    }
+
+    .contact-info-line strong {
+      margin-right: 8px;
+    }
+
+    .sns-links {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+
+    .sns-link {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      text-decoration: none;
+      padding: 12px 28px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      transition: background 0.3s, transform 0.3s;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .sns-link:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+
+    /* ========== フッター ========== */
+    .footer {
+      text-align: center;
+      padding: 20px;
+      background: #4a3020;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 13px;
+    }
+
+    /* ========== レスポンシブ ========== */
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 32px;
+        letter-spacing: 4px;
+      }
+
+      .hero .catchcopy {
+        font-size: 16px;
+      }
+
+      .hero {
+        padding: 60px 20px;
+      }
+
+      .section {
+        padding: 40px 16px;
+      }
+
+      .section-title {
+        font-size: 22px;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .menu-item {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px 24px;
+      }
+
+      .menu-item-price {
+        align-self: flex-end;
+      }
+
+      .info-row {
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .info-label {
+        min-width: auto;
+      }
+
+      .sns-links {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero h1 {
+        font-size: 26px;
+        letter-spacing: 2px;
+      }
+
+      .hero .subtitle {
+        font-size: 13px;
+        letter-spacing: 2px;
+      }
+
+      .hero .catchcopy {
+        font-size: 14px;
+      }
+
+      .hero-icon {
+        font-size: 48px;
+      }
+
+      .section-title {
+        font-size: 20px;
+        letter-spacing: 2px;
+      }
+
+      .menu-item-name {
+        font-size: 16px;
+        flex-wrap: wrap;
+      }
+
+      .menu-item-price {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <script src="nav.js"></script>
+
+  <!-- ヒーローセクション -->
+  <section class="hero">
+    <div class="hero-content">
+      <span class="hero-icon">&#127838;</span>
+      <h1>小麦の丘</h1>
+      <p class="subtitle">KOMUGI NO OKA</p>
+      <p class="catchcopy">毎朝、焼きたての香りとともに。<br>厳選した国産小麦と天然酵母が織りなす、<br>心と身体にやさしいパンをお届けします。</p>
+    </div>
+  </section>
+
+  <!-- こだわりポイント -->
+  <section class="features">
+    <div class="section">
+      <h2 class="section-title">私たちのこだわり</h2>
+      <p class="section-subtitle">OUR COMMITMENT</p>
+      <div class="section-divider"></div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <span class="feature-icon">&#127806;</span>
+          <h3>国産小麦100%</h3>
+          <p>北海道産を中心とした厳選国産小麦のみを使用。小麦本来の豊かな風味と香りを大切にしています。</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#129388;</span>
+          <h3>自家製天然酵母</h3>
+          <p>季節の果物から起こした自家製天然酵母で、じっくり長時間発酵。深い味わいともちもち食感を実現しています。</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">&#9200;</span>
+          <h3>毎朝手作り</h3>
+          <p>早朝4時から生地を仕込み、一つひとつ丁寧に手作り。焼きたてのパンを毎朝お届けしています。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- おすすめメニュー -->
+  <section class="menu">
+    <div class="section">
+      <h2 class="section-title">おすすめメニュー</h2>
+      <p class="section-subtitle">RECOMMENDED</p>
+      <div class="section-divider"></div>
+      <div class="menu-list">
+        <div class="menu-item">
+          <div class="menu-item-info">
+            <div class="menu-item-name">
+              &#127838; 丘の食パン
+              <span class="menu-item-badge">人気No.1</span>
+            </div>
+            <p class="menu-item-desc">国産小麦と北海道バターを贅沢に使用した、しっとりもちもちの食パン。トーストするとサクッと香ばしい仕上がりに。</p>
+          </div>
+          <div class="menu-item-price">&yen;380<span>（税込）</span></div>
+        </div>
+        <div class="menu-item">
+          <div class="menu-item-info">
+            <div class="menu-item-name">
+              &#129360; クロワッサン
+              <span class="menu-item-badge">おすすめ</span>
+            </div>
+            <p class="menu-item-desc">発酵バターを幾層にも折り込んだ、サクサクで芳醇な香りのクロワッサン。焼き上がりの時間を狙って来店されるお客様も。</p>
+          </div>
+          <div class="menu-item-price">&yen;280<span>（税込）</span></div>
+        </div>
+        <div class="menu-item">
+          <div class="menu-item-info">
+            <div class="menu-item-name">
+              &#127856; カレーパン
+            </div>
+            <p class="menu-item-desc">スパイスから手作りした特製カレーをたっぷり包み、カリッと揚げた自慢の一品。お昼前に売り切れることも。</p>
+          </div>
+          <div class="menu-item-price">&yen;260<span>（税込）</span></div>
+        </div>
+        <div class="menu-item">
+          <div class="menu-item-info">
+            <div class="menu-item-name">
+              &#127846; あんバターサンド
+            </div>
+            <p class="menu-item-desc">北海道産小豆のつぶあんと発酵バターを、天然酵母のハードパンでサンド。甘さと塩気の絶妙なバランス。</p>
+          </div>
+          <div class="menu-item-price">&yen;320<span>（税込）</span></div>
+        </div>
+        <div class="menu-item">
+          <div class="menu-item-info">
+            <div class="menu-item-name">
+              &#127839; くるみとレーズンのカンパーニュ
+            </div>
+            <p class="menu-item-desc">天然酵母で長時間発酵させた生地に、ローストくるみとオーガニックレーズンを練り込んだ素朴な味わい。</p>
+          </div>
+          <div class="menu-item-price">&yen;450<span>（税込）</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 店舗情報 -->
+  <section class="shop-info">
+    <div class="section">
+      <h2 class="section-title">店舗情報</h2>
+      <p class="section-subtitle">SHOP INFO</p>
+      <div class="section-divider"></div>
+      <div class="info-card">
+        <div class="info-card-header">&#127968; 小麦の丘</div>
+        <div class="info-table">
+          <div class="info-row">
+            <div class="info-label">所在地</div>
+            <div class="info-value">〒150-0001<br>東京都渋谷区神宮前3-12-8 丘のテラス1F</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">営業時間</div>
+            <div class="info-value">7:00 - 18:00（売り切れ次第閉店）</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">定休日</div>
+            <div class="info-value">毎週月曜日・第3火曜日</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">電話番号</div>
+            <div class="info-value">03-1234-5678</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">アクセス</div>
+            <div class="info-value">東京メトロ「表参道」駅 A2出口より徒歩5分</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- お問い合わせ・SNS -->
+  <section class="contact">
+    <h2 class="section-title">お問い合わせ</h2>
+    <p class="section-subtitle">CONTACT</p>
+    <div class="section-divider"></div>
+    <p class="contact-text">
+      ご予約・お取り置き・イベント出店のご相談など、<br>
+      お気軽にお問い合わせください。
+    </p>
+    <p class="contact-info-line"><strong>TEL</strong> 03-1234-5678</p>
+    <p class="contact-info-line"><strong>MAIL</strong> info@komuginooka.example.com</p>
+    <div class="sns-links">
+      <a href="#" class="sns-link">Instagram</a>
+      <a href="#" class="sns-link">X (Twitter)</a>
+      <a href="#" class="sns-link">LINE</a>
+      <a href="#" class="sns-link">Facebook</a>
+    </div>
+  </section>
+
+  <!-- フッター -->
+  <div class="footer">
+    &copy; 2026 小麦の丘 All rights reserved.
+  </div>
+</body>
+</html>

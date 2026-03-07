@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SunRise Yoga — 自分を整える朝が、人生を変えていく。</title>
+  <meta name="description" content="SunRise Yogaは、朝日のように穏やかに変わっていく自分をコンセプトにしたヨガスタジオです。初回体験レッスン500円。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Noto+Serif+JP:wght@400;500;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ===========================
+       リセットとCSS変数
+    =========================== */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* メインカラー */
+      --color-main: #E8DDD3;
+      --color-sub: #8FA98B;
+      --color-cta: #E07A5F;
+      --color-cta-hover: #C9654C;
+      --color-cta-light: rgba(224, 122, 95, 0.1);
+
+      /* 背景色 */
+      --color-bg-white: #FAFAF7;
+      --color-bg-cream: #F3EDE7;
+      --color-bg-dark: #2C2C2C;
+
+      /* テキスト色 */
+      --color-text-primary: #2C2C2C;
+      --color-text-secondary: #6B6560;
+      --color-text-muted: #9B958F;
+      --color-text-on-dark: #F5F0EB;
+      --color-text-white: #FFFFFF;
+
+      /* フォントサイズ */
+      --text-xs: 0.75rem;
+      --text-sm: 0.875rem;
+      --text-base: 1rem;
+      --text-lg: 1.125rem;
+      --text-xl: 1.25rem;
+      --text-2xl: 1.5rem;
+      --text-3xl: 2rem;
+      --text-4xl: 2.5rem;
+      --text-hero: 3.5rem;
+
+      /* スペーシング */
+      --space-section: 6rem;
+      --container-max: 1100px;
+      --container-padding: 1.5rem;
+
+      /* フォント */
+      --font-en: 'Cormorant Garamond', serif;
+      --font-jp-heading: 'Noto Serif JP', serif;
+      --font-jp-body: 'Noto Sans JP', sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-jp-body);
+      color: var(--color-text-primary);
+      background-color: var(--color-bg-white);
+      line-height: 1.8;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    ul {
+      list-style: none;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    /* ===========================
+       共通コンポーネント
+    =========================== */
+    .container {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 var(--container-padding);
+    }
+
+    .section-label {
+      font-family: var(--font-en);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--color-sub);
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-family: var(--font-jp-heading);
+      font-size: var(--text-3xl);
+      font-weight: 500;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+      color: var(--color-text-primary);
+    }
+
+    .section-lead {
+      font-size: var(--text-base);
+      color: var(--color-text-secondary);
+      max-width: 640px;
+      margin: 0 auto 3rem;
+    }
+
+    /* CTAボタン */
+    .btn-cta {
+      display: inline-block;
+      background-color: var(--color-cta);
+      color: var(--color-text-white);
+      font-family: var(--font-jp-body);
+      font-weight: 700;
+      font-size: var(--text-base);
+      padding: 1rem 2.5rem;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(224, 122, 95, 0.4);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .btn-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(224, 122, 95, 0.5);
+      background-color: var(--color-cta-hover);
+    }
+
+    /* 大きなCTAボタン */
+    .btn-cta--large {
+      padding: 1.25rem 3rem;
+      font-size: var(--text-lg);
+    }
+
+    /* ===========================
+       ヘッダー（固定ナビ）
+    =========================== */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      padding: 1rem 0;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .header--scrolled {
+      background-color: rgba(250, 250, 247, 0.97);
+      box-shadow: 0 1px 10px rgba(0, 0, 0, 0.06);
+    }
+
+    .header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header__logo {
+      font-family: var(--font-en);
+      font-size: var(--text-xl);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      letter-spacing: 0.05em;
+    }
+
+    .header__logo span {
+      color: var(--color-cta);
+    }
+
+    /* デスクトップナビ */
+    .header__nav {
+      display: none;
+    }
+
+    .header__nav a {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      margin-left: 2rem;
+      transition: color 0.3s ease;
+    }
+
+    .header__nav a:hover {
+      color: var(--color-cta);
+    }
+
+    /* モバイルメニューボタン */
+    .header__menu-btn {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .header__menu-btn span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background-color: var(--color-text-primary);
+      border-radius: 2px;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .header__menu-btn--open span:nth-child(1) {
+      transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .header__menu-btn--open span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .header__menu-btn--open span:nth-child(3) {
+      transform: rotate(-45deg) translate(5px, -5px);
+    }
+
+    /* モバイルナビ */
+    .mobile-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
+      background-color: rgba(250, 250, 247, 0.98);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .mobile-nav--open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .mobile-nav a {
+      font-family: var(--font-jp-heading);
+      font-size: var(--text-xl);
+      font-weight: 500;
+      color: var(--color-text-primary);
+      transition: color 0.3s ease;
+    }
+
+    .mobile-nav a:hover {
+      color: var(--color-cta);
+    }
+
+    /* ===========================
+       ヒーローセクション
+    =========================== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 6rem var(--container-padding) 4rem;
+      background: linear-gradient(
+        170deg,
+        #fdf6ee 0%,
+        #f7ece0 20%,
+        #f0ddd0 40%,
+        #e8d5c8 55%,
+        #ddd3c4 70%,
+        #d4ddd0 85%,
+        #c9d9c4 100%
+      );
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ヒーローの装飾的な円 */
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -10%;
+      right: -10%;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(224, 122, 95, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -5%;
+      left: -5%;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(143, 169, 139, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero__content {
+      position: relative;
+      z-index: 1;
+      max-width: 700px;
+    }
+
+    .hero__label {
+      font-family: var(--font-en);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      color: var(--color-cta);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero__title {
+      font-family: var(--font-jp-heading);
+      font-size: var(--text-hero);
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 1.5rem;
+      color: var(--color-text-primary);
+    }
+
+    .hero__subtitle {
+      font-size: var(--text-lg);
+      color: var(--color-text-secondary);
+      line-height: 2;
+      margin-bottom: 2.5rem;
+      font-weight: 300;
+    }
+
+    /* ===========================
+       コンセプト（About）セクション
+    =========================== */
+    .about {
+      padding: var(--space-section) 0;
+      background-color: var(--color-bg-white);
+    }
+
+    .about__inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.5rem;
+    }
+
+    .about__text-area {
+      text-align: center;
+    }
+
+    .about__visual {
+      width: 100%;
+      max-width: 480px;
+      aspect-ratio: 4 / 3;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #e8ddd3 0%, #d4ddd0 50%, #c9d9c4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ロータスのSVGアイコンをCSSで表現 */
+    .about__visual::after {
+      content: '';
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(143, 169, 139, 0.3) 0%, rgba(143, 169, 139, 0.05) 70%);
+    }
+
+    .about__description {
+      font-size: var(--text-base);
+      color: var(--color-text-secondary);
+      line-height: 2.2;
+      max-width: 640px;
+      text-align: left;
+    }
+
+    /* ===========================
+       コースセクション
+    =========================== */
+    .courses {
+      padding: var(--space-section) 0;
+      background-color: var(--color-bg-cream);
+    }
+
+    .courses__header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .courses__grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .course-card {
+      background-color: var(--color-text-white);
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .course-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    /* カード上部のアクセントライン */
+    .course-card__accent {
+      height: 4px;
+    }
+
+    .course-card--beginner .course-card__accent {
+      background: linear-gradient(90deg, var(--color-sub), #a8c4a4);
+    }
+
+    .course-card--relax .course-card__accent {
+      background: linear-gradient(90deg, #b8a9d4, #d4b9c8);
+    }
+
+    .course-card--power .course-card__accent {
+      background: linear-gradient(90deg, var(--color-cta), #e8a870);
+    }
+
+    .course-card__body {
+      padding: 2rem;
+    }
+
+    .course-card__icon {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 1rem;
+    }
+
+    .course-card__icon svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .course-card__name {
+      font-family: var(--font-jp-heading);
+      font-size: var(--text-xl);
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .course-card__tagline {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .course-card__meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .course-card__meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: var(--text-sm);
+      color: var(--color-text-secondary);
+      background-color: var(--color-bg-cream);
+      padding: 0.3rem 0.75rem;
+      border-radius: 20px;
+    }
+
+    .course-card__meta-item svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    .course-card__price {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .course-card__price-sub {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .course-card__desc {
+      font-size: var(--text-sm);
+      color: var(--color-text-secondary);
+      line-height: 1.9;
+    }
+
+    /* ===========================
+       体験レッスンCTAバナー
+    =========================== */
+    .cta-banner {
+      padding: var(--space-section) 0;
+      background: linear-gradient(135deg, #8FA98B 0%, #7a9b76 50%, #8FA98B 100%);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-banner::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      pointer-events: none;
+    }
+
+    .cta-banner__content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-banner__title {
+      font-family: var(--font-jp-heading);
+      font-size: var(--text-3xl);
+      font-weight: 500;
+      color: var(--color-text-white);
+      margin-bottom: 1.5rem;
+    }
+
+    .cta-banner__text {
+      font-size: var(--text-base);
+      color: rgba(255, 255, 255, 0.9);
+      max-width: 560px;
+      margin: 0 auto 2.5rem;
+      line-height: 2;
+    }
+
+    .cta-banner .btn-cta {
+      background-color: var(--color-text-white);
+      color: var(--color-cta);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .cta-banner .btn-cta:hover {
+      background-color: #fff;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    /* ===========================
+       スタジオ情報セクション
+    =========================== */
+    .studio-info {
+      padding: var(--space-section) 0;
+      background-color: var(--color-bg-white);
+    }
+
+    .studio-info__header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .studio-info__content {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    /* 地図風のプレースホルダー */
+    .studio-info__map {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--color-bg-cream) 0%, var(--color-main) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .studio-info__map-pin {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--color-cta);
+    }
+
+    .studio-info__map-pin svg {
+      width: 40px;
+      height: 40px;
+    }
+
+    .studio-info__map-pin span {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--color-text-secondary);
+    }
+
+    .studio-info__details {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .studio-info__item {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .studio-info__item-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      color: var(--color-sub);
+    }
+
+    .studio-info__item-icon svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .studio-info__item-label {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: 0.15rem;
+    }
+
+    .studio-info__item-value {
+      font-size: var(--text-sm);
+      color: var(--color-text-secondary);
+    }
+
+    /* ===========================
+       フッター
+    =========================== */
+    .footer {
+      padding: 3rem 0;
+      background-color: var(--color-bg-dark);
+      text-align: center;
+    }
+
+    .footer__logo {
+      font-family: var(--font-en);
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--color-text-on-dark);
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+
+    .footer__logo span {
+      color: var(--color-cta);
+    }
+
+    .footer__copyright {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+    }
+
+    /* ===========================
+       レスポンシブ（タブレット以上）
+    =========================== */
+    @media (min-width: 768px) {
+      .header__nav {
+        display: flex;
+        align-items: center;
+      }
+
+      .header__menu-btn {
+        display: none;
+      }
+
+      .courses__grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .about__inner {
+        flex-direction: row;
+        gap: 3rem;
+        text-align: left;
+      }
+
+      .about__text-area {
+        text-align: left;
+        flex: 1;
+      }
+
+      .about__visual {
+        flex: 0 0 320px;
+      }
+
+      .studio-info__content {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 3rem;
+      }
+
+      .studio-info__map {
+        flex: 1;
+        aspect-ratio: 1 / 1;
+      }
+
+      .studio-info__details {
+        flex: 1;
+      }
+    }
+
+    /* ===========================
+       レスポンシブ（モバイル調整）
+    =========================== */
+    @media (max-width: 767px) {
+      :root {
+        --text-hero: 2.25rem;
+        --text-3xl: 1.5rem;
+        --text-4xl: 2rem;
+        --space-section: 4rem;
+      }
+
+      .hero__subtitle {
+        font-size: var(--text-base);
+      }
+
+      .btn-cta--large {
+        padding: 1rem 2rem;
+        font-size: var(--text-base);
+      }
+
+      .section-title {
+        font-size: var(--text-2xl);
+      }
+    }
+
+    /* ===========================
+       スクロールアニメーション
+    =========================== */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .fade-in--visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header class="header" id="header">
+    <div class="container">
+      <a href="#" class="header__logo"><span>SunRise</span> Yoga</a>
+      <!-- デスクトップナビゲーション -->
+      <nav class="header__nav">
+        <a href="#about">About</a>
+        <a href="#courses">Courses</a>
+        <a href="#trial">Trial</a>
+        <a href="#access">Access</a>
+      </nav>
+      <!-- モバイルメニューボタン -->
+      <button class="header__menu-btn" id="menuBtn" aria-label="メニューを開く">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- モバイルナビ -->
+  <nav class="mobile-nav" id="mobileNav">
+    <a href="#about" class="mobile-nav__link">About</a>
+    <a href="#courses" class="mobile-nav__link">Courses</a>
+    <a href="#trial" class="mobile-nav__link">Trial</a>
+    <a href="#access" class="mobile-nav__link">Access</a>
+  </nav>
+
+  <!-- ヒーローセクション -->
+  <section class="hero">
+    <div class="hero__content">
+      <p class="hero__label">SunRise Yoga</p>
+      <h1 class="hero__title">自分を整える朝が、<br>人生を変えていく。</h1>
+      <p class="hero__subtitle">忙しい毎日の中で、ほんの少し立ち止まる時間を。<br>SunRise Yogaは、あなたらしい心と体のバランスを取り戻す場所です。</p>
+      <a href="#trial" class="btn-cta btn-cta--large">500円で体験レッスンを予約する</a>
+    </div>
+  </section>
+
+  <!-- コンセプト（About）セクション -->
+  <section class="about" id="about">
+    <div class="container">
+      <div class="about__inner fade-in">
+        <div class="about__visual">
+          <!-- ロータスSVGアイコン -->
+          <svg viewBox="0 0 120 120" width="120" height="120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="60" cy="80" rx="30" ry="8" fill="rgba(143,169,139,0.15)"/>
+            <path d="M60 20 C60 20, 40 50, 60 80 C80 50, 60 20, 60 20Z" fill="rgba(143,169,139,0.25)" stroke="rgba(143,169,139,0.5)" stroke-width="1"/>
+            <path d="M60 35 C60 35, 25 55, 45 80 C55 60, 60 35, 60 35Z" fill="rgba(143,169,139,0.18)" stroke="rgba(143,169,139,0.4)" stroke-width="1"/>
+            <path d="M60 35 C60 35, 95 55, 75 80 C65 60, 60 35, 60 35Z" fill="rgba(143,169,139,0.18)" stroke="rgba(143,169,139,0.4)" stroke-width="1"/>
+            <path d="M60 45 C60 45, 15 60, 38 80 C48 65, 60 45, 60 45Z" fill="rgba(143,169,139,0.12)" stroke="rgba(143,169,139,0.3)" stroke-width="1"/>
+            <path d="M60 45 C60 45, 105 60, 82 80 C72 65, 60 45, 60 45Z" fill="rgba(143,169,139,0.12)" stroke="rgba(143,169,139,0.3)" stroke-width="1"/>
+          </svg>
+        </div>
+        <div class="about__text-area">
+          <p class="section-label">About</p>
+          <h2 class="section-title">SunRise Yogaについて</h2>
+          <p class="about__description">
+            SunRise Yogaは、「朝日のように穏やかに、でも確かに変わっていく自分」をコンセプトにしたヨガスタジオです。経験豊富なインストラクターが一人ひとりの体調やレベルに合わせた丁寧な指導を行います。天然木とアロマの香りに包まれた温かみのあるスタジオ空間で、日常の喧騒から離れたひとときをお過ごしください。少人数制クラスだからこそ実現できる、きめ細やかなサポートが私たちの誇りです。初めての方でも安心して通える、アットホームな雰囲気を大切にしています。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- コースセクション -->
+  <section class="courses" id="courses">
+    <div class="container">
+      <div class="courses__header fade-in">
+        <p class="section-label">Courses</p>
+        <h2 class="section-title">あなたにぴったりのクラスを見つけよう</h2>
+        <p class="section-lead">目的やライフスタイルに合わせて選べる3つのコースをご用意しました。どのコースも体験レッスンからスタートできるので、まずは気軽にお試しください。</p>
+      </div>
+      <div class="courses__grid">
+        <!-- 初心者コース -->
+        <div class="course-card course-card--beginner fade-in">
+          <div class="course-card__accent"></div>
+          <div class="course-card__body">
+            <div class="course-card__icon">
+              <!-- 芽のアイコン -->
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="24" cy="24" r="22" fill="rgba(143,169,139,0.1)"/>
+                <path d="M24 36V22" stroke="#8FA98B" stroke-width="2" stroke-linecap="round"/>
+                <path d="M24 22C24 22 18 18 18 13C18 13 24 15 24 22Z" fill="#8FA98B" opacity="0.6"/>
+                <path d="M24 22C24 22 30 18 30 13C30 13 24 15 24 22Z" fill="#8FA98B" opacity="0.4"/>
+              </svg>
+            </div>
+            <h3 class="course-card__name">初心者コース</h3>
+            <p class="course-card__tagline">はじめてのヨガ</p>
+            <div class="course-card__meta">
+              <span class="course-card__meta-item">
+                <!-- ユーザーアイコン -->
+                <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="4.5" r="2.5" stroke="#6B6560" stroke-width="1.2"/><path d="M2.5 12.5C2.5 10 4.5 8 7 8s4.5 2 4.5 4.5" stroke="#6B6560" stroke-width="1.2" stroke-linecap="round"/></svg>
+                ヨガ未経験〜初心者
+              </span>
+              <span class="course-card__meta-item">
+                <!-- 時計アイコン -->
+                <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="#6B6560" stroke-width="1.2"/><path d="M7 4v3.5l2.5 1.5" stroke="#6B6560" stroke-width="1.2" stroke-linecap="round"/></svg>
+                60分
+              </span>
+            </div>
+            <p class="course-card__price">月4回 6,600円<span style="font-size:0.75em;font-weight:400">（税込）</span></p>
+            <p class="course-card__price-sub">ドロップイン 2,200円（税込）</p>
+            <p class="course-card__desc">呼吸法の基本からゆっくり学べるので、体が硬い方でも安心です。基礎的なポーズを一つひとつ丁寧に練習しながら、ヨガの心地よさを体感していただけます。「運動が苦手」という方にこそ、ぜひ受けていただきたいクラスです。</p>
+          </div>
+        </div>
+
+        <!-- リラックスコース -->
+        <div class="course-card course-card--relax fade-in">
+          <div class="course-card__accent"></div>
+          <div class="course-card__body">
+            <div class="course-card__icon">
+              <!-- 月のアイコン -->
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="24" cy="24" r="22" fill="rgba(184,169,212,0.1)"/>
+                <path d="M28 14C22.5 14 18 18.5 18 24s4.5 10 10 10c2 0 3.8-.6 5.3-1.5C31 34 28 36 24.5 36 18.7 36 14 31.3 14 25.5S18.7 15 24.5 15c1.3 0 2.5.2 3.5.6-.3-.1-.7-.1-1-.1Z" fill="#b8a9d4" opacity="0.5"/>
+                <circle cx="30" cy="18" r="1.5" fill="#b8a9d4" opacity="0.3"/>
+              </svg>
+            </div>
+            <h3 class="course-card__name">リラックスコース</h3>
+            <p class="course-card__tagline">心ほどける癒しの時間</p>
+            <div class="course-card__meta">
+              <span class="course-card__meta-item">
+                <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="4.5" r="2.5" stroke="#6B6560" stroke-width="1.2"/><path d="M2.5 12.5C2.5 10 4.5 8 7 8s4.5 2 4.5 4.5" stroke="#6B6560" stroke-width="1.2" stroke-linecap="round"/></svg>
+                初心者〜中級者
+              </span>
+              <span class="course-card__meta-item">
+                <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="#6B6560" stroke-width="1.2"/><path d="M7 4v3.5l2.5 1.5" stroke="#6B6560" stroke-width="1.2" stroke-linecap="round"/></svg>
+                75分
+              </span>
+            </div>
+            <p class="course-card__price">月4回 7,700円<span style="font-size:0.75em;font-weight:400">（税込）</span></p>
+            <p class="course-card__price-sub">ドロップイン 2,500円（税込）</p>
+            <p class="course-card__desc">アロマの香りとヒーリング音楽の中で、ゆったりとした動きに身を委ねるクラスです。深い呼吸とともに全身の緊張をほぐし、心身ともにリセットする贅沢な時間をお届けします。仕事や家事で疲れた体と心を、やさしく解きほぐしましょう。</p>
+          </div>
+        </div>
+
+        <!-- パワーヨガコース -->
+        <div class="course-card course-card--power fade-in">
+          <div class="course-card__accent"></div>
+          <div class="course-card__body">
+            <div class="course-card__icon">
+              <!-- 炎のアイコン -->
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="24" cy="24" r="22" fill="rgba(224,122,95,0.1)"/>
+                <path d="M24 12C24 12 18 20 18 27c0 3.3 2.7 6 6 6s6-2.7 6-6C30 20 24 12 24 12Z" fill="#E07A5F" opacity="0.4"/>
+                <path d="M24 20C24 20 21 25 21 28.5c0 1.7 1.3 3 3 3s3-1.3 3-3C27 25 24 20 24 20Z" fill="#E07A5F" opacity="0.6"/>
+              </svg>
+            </div>
+            <h3 class="course-card__name">パワーヨガコース</h3>
+            <p class="course-card__tagline">しなやかに、強く。</p>
+            <div class="course-card__meta">
+              <span class="course-card__meta-item">
+                <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="4.5" r="2.5" stroke="#6B6560" stroke-width="1.2"/><path d="M2.5 12.5C2.5 10 4.5 8 7 8s4.5 2 4.5 4.5" stroke="#6B6560" stroke-width="1.2" stroke-linecap="round"/></svg>
+                中級者〜
+              </span>
+              <span class="course-card__meta-item">
+                <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="#6B6560" stroke-width="1.2"/><path d="M7 4v3.5l2.5 1.5" stroke="#6B6560" stroke-width="1.2" stroke-linecap="round"/></svg>
+                75分
+              </span>
+            </div>
+            <p class="course-card__price">月4回 8,800円<span style="font-size:0.75em;font-weight:400">（税込）</span></p>
+            <p class="course-card__price-sub">ドロップイン 2,800円（税込）</p>
+            <p class="course-card__desc">ダイナミックなポーズの連続で、体幹を鍛えながらしなやかな筋肉をつくるクラスです。代謝アップやボディメイクを目指す方に最適なプログラムで、終わった後の爽快感は格別。心地よい達成感とともに、理想の自分に一歩近づけます。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 体験レッスンCTAバナー -->
+  <section class="cta-banner" id="trial">
+    <div class="container">
+      <div class="cta-banner__content fade-in">
+        <h2 class="cta-banner__title">まずは体験してみませんか？</h2>
+        <p class="cta-banner__text">「気になるけど、自分に合うかわからない…」そんな方のために、初回体験レッスンを500円でご用意しています。手ぶらでOK、マット・タオルは無料レンタル。あなたの「はじめの一歩」を、SunRise Yogaが全力でサポートします。</p>
+        <a href="#" class="btn-cta btn-cta--large">500円で体験レッスンを予約する</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- スタジオ情報セクション -->
+  <section class="studio-info" id="access">
+    <div class="container">
+      <div class="studio-info__header fade-in">
+        <p class="section-label">Access</p>
+        <h2 class="section-title">スタジオ情報</h2>
+      </div>
+      <div class="studio-info__content fade-in">
+        <!-- 地図プレースホルダー -->
+        <div class="studio-info__map">
+          <div class="studio-info__map-pin">
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 4C13.4 4 8 9.1 8 15.3 8 24 20 36 20 36s12-12 12-20.7C32 9.1 26.6 4 20 4Zm0 15.5c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5Z" fill="#E07A5F"/>
+            </svg>
+            <span>SunRise Yoga</span>
+          </div>
+        </div>
+        <!-- 詳細情報 -->
+        <div class="studio-info__details">
+          <div class="studio-info__item">
+            <div class="studio-info__item-icon">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M10 2C6.7 2 4 4.7 4 8c0 5 6 10 6 10s6-5 6-10c0-3.3-2.7-6-6-6Zm0 8.5c-1.4 0-2.5-1.1-2.5-2.5S8.6 5.5 10 5.5s2.5 1.1 2.5 2.5S11.4 10.5 10 10.5Z" fill="currentColor"/></svg>
+            </div>
+            <div>
+              <p class="studio-info__item-label">住所</p>
+              <p class="studio-info__item-value">〒150-0001 東京都渋谷区神宮前3-12-8 サンライズビル2F</p>
+            </div>
+          </div>
+          <div class="studio-info__item">
+            <div class="studio-info__item-icon">
+              <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 5.5V10l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <p class="studio-info__item-label">営業時間</p>
+              <p class="studio-info__item-value">平日 7:00〜21:00 ／ 土日祝 8:00〜18:00</p>
+            </div>
+          </div>
+          <div class="studio-info__item">
+            <div class="studio-info__item-icon">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M4 3.5h4l2 4-2.5 1.5a11 11 0 005 5L14 11.5l4 2V17a1.5 1.5 0 01-1.5 1.5C9 18 2 11 2 3.5A1.5 1.5 0 013.5 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <p class="studio-info__item-label">電話番号</p>
+              <p class="studio-info__item-value">03-5678-9012</p>
+            </div>
+          </div>
+          <div class="studio-info__item">
+            <div class="studio-info__item-icon">
+              <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 8h14" stroke="currentColor" stroke-width="1.5"/><path d="M7 2v4M13 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <p class="studio-info__item-label">定休日</p>
+              <p class="studio-info__item-value">毎週月曜日・年末年始</p>
+            </div>
+          </div>
+          <div class="studio-info__item">
+            <div class="studio-info__item-icon">
+              <svg viewBox="0 0 20 20" fill="none"><path d="M2 8l8-5 8 5v8a1 1 0 01-1 1H3a1 1 0 01-1-1V8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 17V10h6v7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <p class="studio-info__item-label">アクセス</p>
+              <p class="studio-info__item-value">東京メトロ銀座線「外苑前駅」3番出口より徒歩4分</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- フッター -->
+  <footer class="footer">
+    <div class="container">
+      <p class="footer__logo"><span>SunRise</span> Yoga</p>
+      <p class="footer__copyright">&copy; 2026 SunRise Yoga All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    /* ===========================
+       ヘッダースクロール制御
+    =========================== */
+    const header = document.getElementById('header');
+    window.addEventListener('scroll', function() {
+      if (window.scrollY > 50) {
+        header.classList.add('header--scrolled');
+      } else {
+        header.classList.remove('header--scrolled');
+      }
+    });
+
+    /* ===========================
+       モバイルメニュー開閉
+    =========================== */
+    const menuBtn = document.getElementById('menuBtn');
+    const mobileNav = document.getElementById('mobileNav');
+
+    menuBtn.addEventListener('click', function() {
+      menuBtn.classList.toggle('header__menu-btn--open');
+      mobileNav.classList.toggle('mobile-nav--open');
+    });
+
+    // モバイルナビのリンクをクリックしたらメニューを閉じる
+    document.querySelectorAll('.mobile-nav a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        menuBtn.classList.remove('header__menu-btn--open');
+        mobileNav.classList.remove('mobile-nav--open');
+      });
+    });
+
+    /* ===========================
+       スクロールアニメーション（Intersection Observer）
+    =========================== */
+    const fadeElements = document.querySelectorAll('.fade-in');
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px 0px -60px 0px',
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('fade-in--visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    fadeElements.forEach(function(el) {
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>

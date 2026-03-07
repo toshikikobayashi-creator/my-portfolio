@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToDoリスト</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      max-width: 560px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #0b8457, #11998e);
+      color: #fff;
+      text-align: center;
+      padding: 32px 20px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 4px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .input-area {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 24px 24px 0;
+    }
+
+    .input-area input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    .input-area input[type="text"]:focus {
+      border-color: #11998e;
+    }
+
+    .input-area input[type="date"] {
+      padding: 12px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.3s;
+      color: #555;
+    }
+
+    .input-area input[type="date"]:focus {
+      border-color: #11998e;
+    }
+
+    .input-area button {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #0b8457, #11998e);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+    }
+
+    .input-area button:hover {
+      opacity: 0.85;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      padding: 16px 24px 8px;
+      font-size: 13px;
+      color: #999;
+    }
+
+    .todo-list {
+      list-style: none;
+      padding: 8px 24px 24px;
+    }
+
+    .todo-list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      background: #f9fafb;
+      border-radius: 10px;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    .todo-list li:hover {
+      background: #f0faf5;
+      transform: translateX(4px);
+    }
+
+    .todo-list li.completed {
+      opacity: 0.55;
+    }
+
+    .todo-list li.completed .todo-text {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+
+    .todo-list li.overdue {
+      background: #fff5f5;
+      border-left: 4px solid #e74c3c;
+    }
+
+    .todo-list li.overdue:hover {
+      background: #ffecec;
+    }
+
+    .todo-checkbox {
+      width: 22px;
+      height: 22px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+
+    .todo-checkbox:hover {
+      border-color: #11998e;
+    }
+
+    .todo-checkbox.checked {
+      background: #11998e;
+      border-color: #11998e;
+    }
+
+    .todo-checkbox.checked::after {
+      content: "";
+      width: 6px;
+      height: 10px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      margin-bottom: 2px;
+    }
+
+    .todo-text {
+      flex: 1;
+      font-size: 15px;
+      color: #333;
+      word-break: break-word;
+    }
+
+    .todo-date {
+      font-size: 12px;
+      color: #999;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .todo-date.overdue {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+
+    .delete-btn:hover {
+      color: #e74c3c;
+      background: #ffeaea;
+    }
+
+    .empty-message {
+      text-align: center;
+      padding: 40px 24px;
+      color: #bbb;
+      font-size: 15px;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 16px;
+      color: #aaa;
+      font-size: 13px;
+      border-top: 1px solid #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <script src="nav.js"></script>
+  <div class="container" style="margin: 0 auto;">
+    <div class="header">
+      <h1>ToDo List</h1>
+      <p>やることを管理しよう</p>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="todoInput" placeholder="やることを入力...">
+      <input type="date" id="todoDate">
+      <button onclick="addTodo()">追加</button>
+    </div>
+
+    <div class="stats">
+      <span id="totalCount">全体: 0件</span>
+      <span id="doneCount">完了: 0件</span>
+      <span id="overdueCount" style="color: #e74c3c;"></span>
+    </div>
+
+    <ul class="todo-list" id="todoList"></ul>
+
+    <div class="footer">ToDoリストアプリ</div>
+  </div>
+
+  <script>
+    // ローカルストレージからデータを読み込む
+    function loadTodos() {
+      const data = localStorage.getItem("todos");
+      return data ? JSON.parse(data) : [];
+    }
+
+    // ローカルストレージにデータを保存する
+    function saveTodos(todos) {
+      localStorage.setItem("todos", JSON.stringify(todos));
+    }
+
+    // 今日の日付を取得する（YYYY-MM-DD形式）
+    function getToday() {
+      return new Date().toISOString().split("T")[0];
+    }
+
+    // 締切が過ぎているか判定する
+    function isOverdue(deadline) {
+      return deadline && !false && deadline < getToday();
+    }
+
+    // ToDoを追加する
+    function addTodo() {
+      const input = document.getElementById("todoInput");
+      const dateInput = document.getElementById("todoDate");
+      const text = input.value.trim();
+      if (!text) return;
+
+      const todos = loadTodos();
+      todos.push({ text: text, completed: false, id: Date.now(), deadline: dateInput.value || "" });
+      saveTodos(todos);
+      input.value = "";
+      dateInput.value = "";
+      renderTodos();
+    }
+
+    // 完了状態を切り替える
+    function toggleTodo(id) {
+      const todos = loadTodos();
+      const todo = todos.find(t => t.id === id);
+      if (todo) {
+        todo.completed = !todo.completed;
+        saveTodos(todos);
+        renderTodos();
+      }
+    }
+
+    // ToDoを削除する
+    function deleteTodo(id) {
+      const todos = loadTodos().filter(t => t.id !== id);
+      saveTodos(todos);
+      renderTodos();
+    }
+
+    // リストを画面に描画する
+    function renderTodos() {
+      const todos = loadTodos();
+      const list = document.getElementById("todoList");
+
+      // 件数を更新する
+      const overdueCount = todos.filter(t => !t.completed && isOverdue(t.deadline)).length;
+      document.getElementById("totalCount").textContent = "全体: " + todos.length + "件";
+      document.getElementById("doneCount").textContent = "完了: " + todos.filter(t => t.completed).length + "件";
+      document.getElementById("overdueCount").textContent = overdueCount > 0 ? "期限切れ: " + overdueCount + "件" : "";
+
+      if (todos.length === 0) {
+        list.innerHTML = '<div class="empty-message">タスクはありません</div>';
+        return;
+      }
+
+      list.innerHTML = todos.map(todo => {
+        const overdue = !todo.completed && isOverdue(todo.deadline);
+        const classes = [todo.completed ? "completed" : "", overdue ? "overdue" : ""].filter(Boolean).join(" ");
+        const dateLabel = todo.deadline
+          ? `<span class="todo-date ${overdue ? "overdue" : ""}">${todo.deadline}</span>`
+          : "";
+        return `
+          <li class="${classes}">
+            <div class="todo-checkbox ${todo.completed ? "checked" : ""}" onclick="toggleTodo(${todo.id})"></div>
+            <span class="todo-text">${escapeHtml(todo.text)}</span>
+            ${dateLabel}
+            <button class="delete-btn" onclick="deleteTodo(${todo.id})">&#x2715;</button>
+          </li>
+        `;
+      }).join("");
+    }
+
+    // HTMLエスケープ処理
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Enterキーで追加できるようにする
+    document.getElementById("todoInput").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") addTodo();
+    });
+
+    // 初期描画
+    renderTodos();
+  </script>
+</body>
+</html>

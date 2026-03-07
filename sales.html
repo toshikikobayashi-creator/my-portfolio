@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>売上データ集計ツール</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      max-width: 800px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #0b8457, #11998e);
+      color: #fff;
+      text-align: center;
+      padding: 32px 20px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 4px;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.85;
+    }
+
+    .content {
+      padding: 24px;
+    }
+
+    /* ドロップエリア */
+    .drop-zone {
+      border: 3px dashed #ccc;
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      color: #999;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 16px;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: #11998e;
+      background: #f0faf5;
+      color: #0b8457;
+    }
+
+    .drop-zone .icon {
+      font-size: 40px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .drop-zone .sub {
+      font-size: 13px;
+      margin-top: 4px;
+      color: #bbb;
+    }
+
+    /* ボタン類 */
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+
+    .btn:hover {
+      opacity: 0.85;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0b8457, #11998e);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #555;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ファイル情報 */
+    .file-info {
+      background: #f0faf5;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      color: #0b8457;
+      display: none;
+    }
+
+    /* テーブル */
+    .section-title {
+      font-size: 18px;
+      color: #0b8457;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e6fff0;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      margin-bottom: 32px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead th {
+      background: #0b8457;
+      color: #fff;
+      padding: 12px 16px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    thead th:first-child {
+      border-radius: 8px 0 0 0;
+    }
+
+    thead th:last-child {
+      border-radius: 0 8px 0 0;
+    }
+
+    tbody td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    tbody tr:hover {
+      background: #f0faf5;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .total-row {
+      background: #f0faf5;
+      font-weight: bold;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    /* グラフ */
+    .chart-area {
+      margin-bottom: 32px;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* 非表示エリア */
+    .results {
+      display: none;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 16px;
+      color: #aaa;
+      font-size: 13px;
+      border-top: 1px solid #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <script src="nav.js"></script>
+  <div class="container" style="margin: 0 auto;">
+    <div class="header">
+      <h1>売上データ集計ツール</h1>
+      <p>CSVをドロップして商品別の売上を自動集計</p>
+    </div>
+
+    <div class="content">
+      <!-- ドロップエリア -->
+      <div class="drop-zone" id="dropZone">
+        <span class="icon">&#128206;</span>
+        CSVファイルをここにドラッグ＆ドロップ<br>
+        <span class="sub">またはクリックしてファイルを選択（形式: 日付, 商品名, 数量, 単価）</span>
+      </div>
+      <input type="file" id="fileInput" accept=".csv" style="display:none">
+
+      <!-- ボタン -->
+      <div class="actions">
+        <button class="btn btn-primary" onclick="loadSampleData()">サンプルデータで試す</button>
+        <button class="btn btn-secondary" id="downloadBtn" onclick="downloadCsv()" disabled>集計結果をCSVダウンロード</button>
+        <button class="btn btn-secondary" id="clearBtn" onclick="clearData()" disabled>クリア</button>
+      </div>
+
+      <!-- ファイル情報 -->
+      <div class="file-info" id="fileInfo"></div>
+
+      <!-- 集計結果 -->
+      <div class="results" id="results">
+        <h2 class="section-title">商品別 売上集計</h2>
+        <div class="table-wrapper">
+          <table id="resultTable">
+            <thead>
+              <tr>
+                <th>商品名</th>
+                <th class="text-right">数量</th>
+                <th class="text-right">売上金額</th>
+                <th class="text-right">構成比</th>
+              </tr>
+            </thead>
+            <tbody id="resultBody"></tbody>
+          </table>
+        </div>
+
+        <h2 class="section-title">売上グラフ</h2>
+        <div class="chart-area">
+          <canvas id="chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">売上データ集計ツール</div>
+  </div>
+
+  <script>
+    // 集計データを保持する変数
+    let aggregatedData = [];
+
+    // ドロップエリアのイベント設定
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+
+    dropZone.addEventListener("click", () => fileInput.click());
+
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.classList.add("dragover");
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.classList.remove("dragover");
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      if (file && file.name.endsWith(".csv")) {
+        readCsvFile(file);
+      }
+    });
+
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) readCsvFile(file);
+    });
+
+    // CSVファイルを読み込む
+    function readCsvFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target.result;
+        processCsv(text, file.name);
+      };
+      reader.readAsText(file, "UTF-8");
+    }
+
+    // CSV文字列を解析して集計する
+    function processCsv(csvText, fileName) {
+      const lines = csvText.trim().split("\n").map(line => line.trim()).filter(line => line);
+      if (lines.length < 2) return;
+
+      // ヘッダー行をスキップして各行を解析する
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(",").map(c => c.trim());
+        if (cols.length < 4) continue;
+        const productName = cols[1];
+        const quantity = parseInt(cols[2], 10);
+        const unitPrice = parseInt(cols[3], 10);
+        if (!productName || isNaN(quantity) || isNaN(unitPrice)) continue;
+        rows.push({ productName, quantity, unitPrice, amount: quantity * unitPrice });
+      }
+
+      // 商品名ごとに集計する
+      const summary = {};
+      rows.forEach(row => {
+        if (!summary[row.productName]) {
+          summary[row.productName] = { quantity: 0, amount: 0 };
+        }
+        summary[row.productName].quantity += row.quantity;
+        summary[row.productName].amount += row.amount;
+      });
+
+      // 売上金額の降順でソートする
+      aggregatedData = Object.entries(summary)
+        .map(([name, data]) => ({ name, quantity: data.quantity, amount: data.amount }))
+        .sort((a, b) => b.amount - a.amount);
+
+      // ファイル情報を表示する
+      const fileInfo = document.getElementById("fileInfo");
+      fileInfo.style.display = "block";
+      fileInfo.textContent = `${fileName || "サンプルデータ"} - ${rows.length}件のデータを読み込みました（${aggregatedData.length}商品）`;
+
+      // ボタンを有効にする
+      document.getElementById("downloadBtn").disabled = false;
+      document.getElementById("clearBtn").disabled = false;
+
+      renderResults();
+    }
+
+    // 集計結果を表示する
+    function renderResults() {
+      const resultsDiv = document.getElementById("results");
+      const tbody = document.getElementById("resultBody");
+      resultsDiv.style.display = "block";
+
+      const totalAmount = aggregatedData.reduce((sum, d) => sum + d.amount, 0);
+      const totalQuantity = aggregatedData.reduce((sum, d) => sum + d.quantity, 0);
+
+      // テーブルを描画する
+      let html = aggregatedData.map(d => {
+        const ratio = totalAmount > 0 ? ((d.amount / totalAmount) * 100).toFixed(1) : "0.0";
+        return `
+          <tr>
+            <td>${escapeHtml(d.name)}</td>
+            <td class="text-right">${d.quantity.toLocaleString()}</td>
+            <td class="text-right">&yen;${d.amount.toLocaleString()}</td>
+            <td class="text-right">${ratio}%</td>
+          </tr>
+        `;
+      }).join("");
+
+      // 合計行を追加する
+      html += `
+        <tr class="total-row">
+          <td>合計</td>
+          <td class="text-right">${totalQuantity.toLocaleString()}</td>
+          <td class="text-right">&yen;${totalAmount.toLocaleString()}</td>
+          <td class="text-right">100.0%</td>
+        </tr>
+      `;
+
+      tbody.innerHTML = html;
+
+      drawChart();
+    }
+
+    // 横棒グラフを描画する
+    function drawChart() {
+      const canvas = document.getElementById("chart");
+      const ctx = canvas.getContext("2d");
+
+      const barHeight = 36;
+      const gap = 10;
+      const labelWidth = 120;
+      const valueWidth = 100;
+      const padding = 20;
+      const chartWidth = canvas.parentElement.clientWidth - padding * 2;
+
+      canvas.width = (canvas.parentElement.clientWidth) * 2;
+      canvas.height = (padding * 2 + aggregatedData.length * (barHeight + gap)) * 2;
+      canvas.style.height = (padding * 2 + aggregatedData.length * (barHeight + gap)) + "px";
+      ctx.scale(2, 2);
+
+      const maxAmount = Math.max(...aggregatedData.map(d => d.amount));
+      const barAreaWidth = chartWidth - labelWidth - valueWidth;
+
+      // グラデーションの色を定義する
+      const colors = ["#0b8457", "#11998e", "#38ef7d", "#2ecc71", "#27ae60", "#16a085", "#1abc9c", "#3498db"];
+
+      aggregatedData.forEach((d, i) => {
+        const y = padding + i * (barHeight + gap);
+        const barW = maxAmount > 0 ? (d.amount / maxAmount) * barAreaWidth : 0;
+
+        // 商品名ラベルを描画する
+        ctx.fillStyle = "#333";
+        ctx.font = "13px sans-serif";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        ctx.fillText(truncateText(ctx, d.name, labelWidth - 10), labelWidth - 10, y + barHeight / 2);
+
+        // 棒グラフを描画する
+        const gradient = ctx.createLinearGradient(labelWidth, 0, labelWidth + barW, 0);
+        gradient.addColorStop(0, colors[i % colors.length]);
+        gradient.addColorStop(1, adjustColor(colors[i % colors.length], 40));
+        ctx.fillStyle = gradient;
+        roundRect(ctx, labelWidth, y, barW, barHeight, 6);
+
+        // 金額ラベルを描画する
+        ctx.fillStyle = "#555";
+        ctx.font = "13px sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText("\u00A5" + d.amount.toLocaleString(), labelWidth + barW + 8, y + barHeight / 2);
+      });
+    }
+
+    // 角丸の四角形を描画する
+    function roundRect(ctx, x, y, w, h, r) {
+      if (w < r * 2) r = w / 2;
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.fill();
+    }
+
+    // テキストを指定幅に収まるよう省略する
+    function truncateText(ctx, text, maxWidth) {
+      if (ctx.measureText(text).width <= maxWidth) return text;
+      while (ctx.measureText(text + "...").width > maxWidth && text.length > 0) {
+        text = text.slice(0, -1);
+      }
+      return text + "...";
+    }
+
+    // 色を明るくする
+    function adjustColor(hex, amount) {
+      const num = parseInt(hex.replace("#", ""), 16);
+      const r = Math.min(255, (num >> 16) + amount);
+      const g = Math.min(255, ((num >> 8) & 0x00FF) + amount);
+      const b = Math.min(255, (num & 0x0000FF) + amount);
+      return "#" + (r << 16 | g << 8 | b).toString(16).padStart(6, "0");
+    }
+
+    // サンプルデータを生成する
+    function loadSampleData() {
+      const products = ["ノートPC", "マウス", "キーボード", "モニター", "USBケーブル", "ヘッドセット", "Webカメラ"];
+      const lines = ["日付,商品名,数量,単価"];
+
+      for (let month = 1; month <= 3; month++) {
+        products.forEach(product => {
+          const days = Math.floor(Math.random() * 5) + 1;
+          for (let d = 0; d < days; d++) {
+            const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, "0");
+            const mm = String(month).padStart(2, "0");
+            const qty = Math.floor(Math.random() * 10) + 1;
+            let price;
+            switch (product) {
+              case "ノートPC": price = 89800; break;
+              case "マウス": price = 3980; break;
+              case "キーボード": price = 7980; break;
+              case "モニター": price = 34800; break;
+              case "USBケーブル": price = 980; break;
+              case "ヘッドセット": price = 12800; break;
+              case "Webカメラ": price = 8980; break;
+              default: price = 1000;
+            }
+            lines.push(`2026-${mm}-${day},${product},${qty},${price}`);
+          }
+        });
+      }
+
+      processCsv(lines.join("\n"), "サンプルデータ");
+    }
+
+    // 集計結果をCSVでダウンロードする
+    function downloadCsv() {
+      if (aggregatedData.length === 0) return;
+
+      const totalAmount = aggregatedData.reduce((sum, d) => sum + d.amount, 0);
+      const bom = "\uFEFF";
+      let csv = bom + "商品名,数量,売上金額,構成比(%)\n";
+
+      aggregatedData.forEach(d => {
+        const ratio = totalAmount > 0 ? ((d.amount / totalAmount) * 100).toFixed(1) : "0.0";
+        csv += `${d.name},${d.quantity},${d.amount},${ratio}\n`;
+      });
+
+      const totalQuantity = aggregatedData.reduce((sum, d) => sum + d.quantity, 0);
+      csv += `合計,${totalQuantity},${totalAmount},100.0\n`;
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "売上集計_" + new Date().toISOString().split("T")[0] + ".csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // データをクリアする
+    function clearData() {
+      aggregatedData = [];
+      document.getElementById("results").style.display = "none";
+      document.getElementById("fileInfo").style.display = "none";
+      document.getElementById("downloadBtn").disabled = true;
+      document.getElementById("clearBtn").disabled = true;
+      fileInput.value = "";
+    }
+
+    // HTMLエスケープ処理
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
