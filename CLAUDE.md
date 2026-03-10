@@ -1,5 +1,39 @@
 # 俊輝AI株式会社 - 組織ルール
 
+---
+
+## ヒューマンアド LP月次更新プロジェクト
+
+### プロジェクト情報
+- **プロジェクト名**: ヒューマンアド LP月次更新
+- **LP URL**: https://toshikikobayashi-creator.github.io/my-portfolio/blog_ad_20260310.html
+- **リポジトリ**: https://github.com/toshikikobayashi-creator/my-portfolio
+- **サービス**: リュック型LEDディスプレイ（Jiatean JTA-WT32-BA、32インチ）を背負って歩行する広告
+- **競争優位**: モバイル × 即時 × 低価格
+- **運営**: Backstage Inc.
+
+### 月次更新ワークフロー
+1. **Researchフェーズ** (`.claude/agents/researcher`) — 競合調査・業界トレンド収集 → `research/YYYY-MM_research.md`
+2. **Writingフェーズ** (`.claude/agents/writer`) — LP記事更新・SEO最適化 → `updates/YYYY-MM_changes.md`
+3. **QAフェーズ** (`.claude/agents/qa-tester`) — Playwright MCPで品質テスト → `qa/YYYY-MM_test_report.md`
+
+### ディレクトリ構成
+```
+my-portfolio/
+├── blog_ad_20260310.html   # 対象LP
+├── .claude/
+│   ├── settings.json       # Agent Teams有効化
+│   └── agents/
+│       ├── researcher.md   # 競合調査エージェント
+│       ├── writer.md       # LP更新エージェント
+│       └── qa-tester.md    # QAテストエージェント
+├── research/               # リサーチ出力 (YYYY-MM_research.md)
+├── updates/                # 更新ログ (YYYY-MM_changes.md)
+└── qa/                     # QAレポート (YYYY-MM_test_report.md)
+```
+
+---
+
 ## 組織構造
 - 社長（俊輝）：最終承認・方針決定のみ。実作業はしない。
 - 統括役員（COO）：全部署の管理・品質統括・クロスチェック。社長への最終報告。
