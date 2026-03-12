@@ -145,9 +145,12 @@ sales-outreach/SKILL.md を起点に、以下を必要に応じて参照：
 - scripts/tracker.py — リスト管理スクリプト
 
 ### 送信者情報
+```
 株式会社HUMAN AD
 プロジェクトマネージャー 小林俊輝
 TEL: 070-2156-0103
+Email: toshiki.kobayashi@wein.co.jp
+```
 
 ### 品質チェック（文章生成後に必ず確認）
 - 企業固有の情報がフックに入っているか
