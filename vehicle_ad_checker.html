@@ -698,26 +698,82 @@ function hideProgress() { document.getElementById("progWrap").style.display="non
 
 // ===== プロンプト =====
 function buildPrompt(vtype) {
-  return `あなたは東京屋外広告協会の「車体利用広告デザイン自主審査基準（2026年1月改定版）」に基づく審査AIです。
+  return `あなたは東京屋外広告協会「車体利用広告デザイン自主審査基準（2026年1月改定版）」に基づく審査AIです。
 対象車種: ${vtype}
 
-画像を以下の9ステップで分析し、必ず指定のJSON形式のみで出力してください。説明文は不要です。
+【最重要ルール】
+全ての指摘に「計測値」と「基準値」を必ず数字で明記すること。
+例: ✗「赤系が多い」→ ✓「赤系色の面積比率: 推定63%（基準: 50%未満）、超過: 約13%」
+例: ✗「文字が多い」→ ✓「テキスト行数: 7行（基準: 4行以内）、超過: 3行」
+例: ✗「顔が大きい」→ ✓「顔の天地比: デザインスペース比 推定91%（基準: 80%以内）、超過: 11%」
+日本語のみで出力すること（英単語・アルファベットの使用禁止）。
 
 【分析ステップ】
-1. 主要色（上位5色）をRGB・CMYK推定・マンセル推定・面積比で特定
-2. 禁止色チェック: 赤(マンセル10RP〜10R, 明度4〜6, 彩度≧12)・黄(10YR〜10Y, 明度≧7.5, 彩度≧10)・黒(N1〜N4または明度≦4かつ彩度≦0.3)を下地/過半に使用していないか
-   CMYK参考: 黄地色Y≦70%, 赤地色M≦70%+Y≦70%, 黒地色K≦70%, 赤純色面積≦1/3
-   広告宣伝車のみ: 高彩度色・原色・金銀色は面積20%以内
-3. テキスト: 行数(目安4行以内)・後部禁止表示(電話番号/URL/QR/#等)・全方面禁止(QR/クーポン)・重複記載
-4. 顔・人物: 顔の天地比(デザインスペース≦80%・車体≦50%)・身体強調・性的表現
-5. レイアウト: メイン/サブ関係・余白・統一感・繰り返しパターン(水玉/格子等)
-6. 表示位置: 屋根部分・前部・窓部分への広告有無・バス会社識別性
-7. 禁止コンテンツ: アルコール/タバコ・発光蛍光材料・信号/標識と紛らわしいデザイン・四コマ漫画・公序良俗違反
-8. 交通安全: 飛び出して見えるデザイン・距離感を惑わすデザイン(渦巻/チェック等)・過度な鮮やかさ
-9. 総合デザイン品質: 景観調和・色彩対比・シンプルさ・統一感
 
-【出力JSONのみ】
-{"vehicle_type":"${vtype}","overall_score":0,"overall_verdict":"合格|条件付き合格（修正必要）|不合格","summary":"全体所見200文字以内","categories":{"color_analysis":{"score":0,"dominant_colors":[{"color_name":"色名","rgb":[0,0,0],"cmyk_estimate":[0,0,0,0],"area_ratio":0.0,"munsell_estimate":"H V/C"}],"prohibited_color_violations":[{"color":"色名","violation_type":"禁止色種別","area_ratio":0.0,"severity":"critical|warning|info","detail":"説明"}],"high_chroma_issues":[],"cmyk_violations":[]},"text_analysis":{"score":0,"detected_text_elements":[{"content":"テキスト","position":"位置","size":"大|中|小","lines":0}],"total_text_lines":0,"violations":[{"rule_id":"基準ID","description":"説明","severity":"critical|warning|info","location":"位置"}]},"face_person_analysis":{"score":0,"faces_detected":0,"face_details":[{"position":"位置","height_ratio_design_space":0.0,"height_ratio_vehicle":0.0,"violation":false}],"body_emphasis_issues":[]},"layout_analysis":{"score":0,"main_sub_clarity":0,"spacing_adequacy":0,"consistency":0,"violations":[]},"position_analysis":{"score":0,"violations":[{"area":"屋根|前部|窓","description":"説明","severity":"critical|warning|info"}]},"content_analysis":{"score":0,"prohibited_content":[{"type":"種別","description":"説明","severity":"critical|warning|info"}]},"traffic_safety_analysis":{"score":0,"violations":[]},"design_quality":{"score":0,"landscape_harmony":0,"color_contrast_appropriateness":0,"simplicity":0,"unity":0,"notes":[]}},"critical_violations":[{"rule_id":"基準ID","category":"カテゴリ","description":"詳細説明","fix_suggestion":"修正提案"}],"warnings":[{"rule_id":"基準ID","category":"カテゴリ","description":"詳細説明","fix_suggestion":"修正提案"}],"info_notes":[{"description":"参考情報"}]}`;
+ステップ1: 主要色の特定
+画像の色域を分析し、上位5色を面積比率順に特定。各色のRGB値・CMYK推定値・マンセル推定値・面積比率（%）を数値で示す。
+
+ステップ2: 禁止色の判定（数値必須）
+以下の禁止色を下地または過半（面積50%超）に使用していないか、面積比率（%）で判定する。
+
+赤色禁止範囲: マンセル色相10RP〜10R、明度4〜6、彩度12以上
+黄色禁止範囲: マンセル色相10YR〜10Y、明度7.5以上、彩度10以上
+黒色禁止範囲: 無彩色N1〜N4、または有彩色で明度4以下かつ彩度0.3以下
+
+各禁止色について以下を数値で報告:
+・推定面積比率（例: 赤系色: 推定58%）
+・推定マンセル値（例: 5R 5/14）
+・推定RGB値（例: R=220, G=40, B=30）
+・推定CMYK値（例: M=85%, Y=92%）
+・基準値との差（例: 基準50%未満、超過約8%）
+
+広告宣伝車の追加基準: 高彩度色・原色・金銀色の面積は20%以内。実測値（%）を明記。
+
+ステップ3: テキスト分析（数値必須）
+・テキスト総行数: ○行（基準: 4行以内）
+・各テキスト要素の推定文字サイズ（例: 最大文字高さ: 車体高の約15%）
+・後部面での禁止表示（電話番号・URL・QRコード・ハッシュタグ等）の有無と位置
+・同一情報の重複件数
+
+ステップ4: 顔・人物分析（数値必須）
+・顔の検出数
+・顔の天地比: デザインスペース比 推定○%（基準: 80%以内）
+・顔の天地比: 車体全体比 推定○%（基準: 50%以内）
+・超過している場合は超過量（%）を明記
+
+ステップ5: レイアウト分析
+・余白の割合（推定%）
+・情報密度（高/中/低）
+・繰り返しパターンの有無と種類・繰り返し数
+
+ステップ6: 表示位置分析
+・屋根部分への広告有無と推定面積
+・前部への広告有無
+・窓部分への広告有無
+・バス会社名等の視認性（見える/見えにくい/見えない）
+
+ステップ7: 禁止コンテンツ分析
+・アルコール関連表示の有無（具体的に何が写っているか）
+・たばこ関連表示の有無
+・その他禁止コンテンツの有無
+
+ステップ8: 交通安全分析
+・視覚的な飛び出し効果の有無
+・距離感・平衡感覚を惑わすパターンの有無と種類
+・全体的な彩度レベル（高/中/低）
+
+ステップ9: 総合デザイン品質
+・使用色数（推定色数）
+・情報量（適切/多すぎ/少なすぎ）
+・景観との調和度（0〜100点）
+
+【出力形式: 以下のJSON形式のみで出力。説明文不要。日本語のみ使用。】
+
+{"車種":"${vtype}","総合点数":0,"総合判定":"合格|条件付き合格（修正必要）|不合格","総合所見":"200文字以内の総合所見","カテゴリ別点数":{"色彩":0,"テキスト":0,"顔・人物":0,"レイアウト":0,"表示位置":0,"禁止内容":0,"交通安全":0,"デザイン品質":0},"主要色":[{"色名":"色名","赤青緑":[0,0,0],"印刷色推定":[0,0,0,0],"面積比率":"推定○%","マンセル推定値":"色相 明度/彩度","判定":"問題なし|要注意|禁止色"}],"重大違反":[{"基準番号":"P10など","カテゴリ":"色彩など","説明":"具体的な説明","計測値":"推定○%など実測値","基準値":"○%以下など基準","超過量":"○%超過など差分","修正提案":"具体的な修正方法"}],"警告":[{"基準番号":"基準ID","カテゴリ":"カテゴリ","説明":"具体的な説明","計測値":"実測値","基準値":"基準値","超過量":"差分","修正提案":"修正方法"}],"参考情報":[{"説明":"参考情報"}]}
+
+【スコア基準】
+100点: 完全合格 / 80〜99点: 軽微注意（合格）/ 60〜79点: 修正推奨（条件付き合格）/ 40〜59点: 重大違反（修正必須）/ 0〜39点: 複数重大違反（不合格）
+日本語のみ使用。数値は必ず根拠を示す。確信度が低い場合は「推定」と明記。`;
 }
 
 // ===== 分析実行 =====
@@ -794,7 +850,8 @@ async function analyze() {
     setProgress(100, "✅ 完了");
     await new Promise(r => setTimeout(r, 400));
     lastResult = parsed;
-    renderResult(parsed);
+    // 日本語キーと英語キーの両方に対応
+    renderResult(normalizeResult(parsed));
 
   } catch (err) {
     showErr("エラー: " + err.message);
@@ -813,6 +870,71 @@ function toBase64(file) {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+// ===== 日本語・英語キー正規化 =====
+function normalizeResult(r) {
+  // 日本語JSONキーを内部形式に統一
+  const cats = r["カテゴリ別点数"] || r.categories || {};
+  const catNorm = {
+    color_analysis:          { score: cats["色彩"]     ?? cats.color_analysis?.score     ?? 0 },
+    text_analysis:           { score: cats["テキスト"]  ?? cats.text_analysis?.score      ?? 0 },
+    face_person_analysis:    { score: cats["顔・人物"]  ?? cats.face_person_analysis?.score?? 0 },
+    layout_analysis:         { score: cats["レイアウト"]?? cats.layout_analysis?.score    ?? 0 },
+    position_analysis:       { score: cats["表示位置"]  ?? cats.position_analysis?.score  ?? 0 },
+    content_analysis:        { score: cats["禁止内容"]  ?? cats.content_analysis?.score   ?? 0 },
+    traffic_safety_analysis: { score: cats["交通安全"]  ?? cats.traffic_safety_analysis?.score ?? 0 },
+    design_quality:          { score: cats["デザイン品質"] ?? cats.design_quality?.score  ?? 0 },
+  };
+
+  // 重大違反
+  const critRaw = r["重大違反"] || r.critical_violations || [];
+  const critNorm = critRaw.map(v => ({
+    rule_id:       v["基準番号"]  || v.rule_id  || "",
+    category:      v["カテゴリ"]  || v.category || "",
+    description:   v["説明"]      || v.description || "",
+    measured_value:(v["計測値"] ? `${v["計測値"]}` : "") || "",
+    threshold:     v["基準値"]    || v.threshold || "",
+    fix_suggestion:v["修正提案"]  || v.fix_suggestion || "",
+  }));
+
+  // 警告
+  const warnRaw = r["警告"] || r.warnings || [];
+  const warnNorm = warnRaw.map(v => ({
+    rule_id:       v["基準番号"]  || v.rule_id  || "",
+    category:      v["カテゴリ"]  || v.category || "",
+    description:   v["説明"]      || v.description || "",
+    measured_value:(v["計測値"] ? `${v["計測値"]}` : "") || "",
+    threshold:     v["基準値"]    || v.threshold || "",
+    fix_suggestion:v["修正提案"]  || v.fix_suggestion || "",
+  }));
+
+  // 参考情報
+  const infoRaw = r["参考情報"] || r.info_notes || [];
+  const infoNorm = infoRaw.map(v => ({ description: v["説明"] || v.description || "" }));
+
+  // 主要色
+  const colorsRaw = r["主要色"] || r.categories?.color_analysis?.dominant_colors || [];
+  const colorsNorm = colorsRaw.map(c => ({
+    color_name:      c["色名"]         || c.color_name     || "—",
+    rgb:             c["赤青緑"]        || c.rgb            || [128,128,128],
+    cmyk_estimate:   c["印刷色推定"]   || c.cmyk_estimate  || [0,0,0,0],
+    area_ratio_str:  c["面積比率"]      || (c.area_ratio != null ? (c.area_ratio*100).toFixed(0)+"%" : "—"),
+    munsell_estimate:c["マンセル推定値"]|| c.munsell_estimate|| "—",
+    verdict:         c["判定"]          || "",
+  }));
+
+  return {
+    overall_score:   r["総合点数"]   ?? r.overall_score   ?? 0,
+    overall_verdict: r["総合判定"]   || r.overall_verdict  || "不明",
+    summary:         r["総合所見"]   || r.summary          || "",
+    categories: catNorm,
+    critical_violations: critNorm,
+    warnings:            warnNorm,
+    info_notes:          infoNorm,
+    _colors:             colorsNorm,
+    _raw:                r,
+  };
 }
 
 // ===== 結果レンダリング =====
@@ -884,19 +1006,24 @@ function renderResult(r) {
     document.getElementById("infoSection").style.display = "none";
   }
 
-  // 主要色
-  const colors = cats.color_analysis?.dominant_colors || [];
+  // 主要色（正規化済みデータを使用）
+  const colors = r._colors || [];
   if (colors.length > 0) {
     document.getElementById("colorSection").style.display = "block";
     const swatches = colors.map(c => {
       const [r2,g,b] = c.rgb || [200,200,200];
       const [cc,m,y,k] = c.cmyk_estimate || [0,0,0,0];
-      const ratio = c.area_ratio ? (c.area_ratio*100).toFixed(0)+"%" : "—";
+      const vdict = c.verdict || "";
+      const vcolor = vdict.includes("禁止") ? "var(--danger)" : vdict.includes("注意") ? "var(--warn)" : "var(--ok)";
       return `<div class="swatch">
         <div class="swatch-color" style="background:rgb(${r2},${g},${b})"></div>
         <div class="swatch-info">
-          <div class="swatch-name">${c.color_name||"—"}</div>
-          <div class="swatch-vals">RGB(${r2},${g},${b})<br>CMYK(${cc},${m},${y},${k})<br>面積:${ratio} / ${c.munsell_estimate||"—"}</div>
+          <div class="swatch-name">${c.color_name}</div>
+          <div class="swatch-vals">
+            赤青緑(${r2},${g},${b}) / 印刷色(${cc},${m},${y},${k})<br>
+            面積: ${c.area_ratio_str} / マンセル: ${c.munsell_estimate}
+            ${vdict ? `<br><span style="color:${vcolor};font-weight:700">${vdict}</span>` : ""}
+          </div>
         </div>
       </div>`;
     }).join("");
@@ -919,12 +1046,13 @@ function renderViolationSection(secId, bodyId, countId, toggleId, items, severit
   document.getElementById(bodyId).innerHTML = items.map(v => `
     <div class="violation-item ${severityClass}">
       <div class="v-header">
-        <span class="v-sev-badge ${severityClass}">${severityClass==="critical"?"🔴 CRITICAL":"🟡 WARNING"}</span>
+        <span class="v-sev-badge ${severityClass}">${severityClass==="critical"?"🔴 重大違反":"🟡 警告"}</span>
         <span class="v-rule">${v.rule_id||""}</span>
         <span class="v-rule" style="color:#888">${v.category||""}</span>
       </div>
       <div class="v-desc">${v.description||""}</div>
-      ${v.fix_suggestion ? `<div class="v-fix">${v.fix_suggestion}</div>` : ""}
+      ${v.measured_value ? `<div class="v-fix" style="color:var(--warn)">📊 計測値: ${v.measured_value}　基準: ${v.threshold||"—"}</div>` : ""}
+      ${v.fix_suggestion ? `<div class="v-fix">→ 修正提案: ${v.fix_suggestion}</div>` : ""}
     </div>`).join("");
 }
 
