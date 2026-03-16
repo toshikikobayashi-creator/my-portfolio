@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>車体利用広告デザイン 自主審査基準チェックツール</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root {
+    --bg:     #0a0a0f;
+    --card:   #13131a;
+    --card2:  #1a1a24;
+    --border: #2a2a3a;
+    --ac:     #00d4ff;
+    --or:     #ff6b00;
+    --text:   #e0e0e0;
+    --muted:  #777;
+    --ok:     #00ff88;
+    --warn:   #ffcc00;
+    --danger: #ff4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+    min-height: 100vh;
+    line-height: 1.7;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    background: #0d0d18;
+    border-bottom: 1px solid var(--border);
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo-icon { font-size: 24px; }
+  .logo-text { font-size: 14px; font-weight: 800; color: #fff; }
+  .logo-sub  { font-size: 11px; color: var(--muted); }
+  .badge {
+    margin-left: auto;
+    background: var(--ac);
+    color: #000;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+  }
+
+  /* ===== LAYOUT ===== */
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    min-height: calc(100vh - 61px);
+  }
+
+  /* ===== LEFT PANEL ===== */
+  .left-panel {
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    padding: 24px;
+    overflow-y: auto;
+    height: calc(100vh - 61px);
+    position: sticky;
+    top: 61px;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ac);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin: 20px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  /* API KEY */
+  .api-row {
+    display: flex;
+    gap: 8px;
+  }
+  .api-row input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 7px;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-family: monospace;
+  }
+  .api-row input:focus { outline: none; border-color: var(--ac); }
+
+  .btn-sm {
+    background: var(--ac);
+    color: #000;
+    border: none;
+    border-radius: 7px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity .2s;
+  }
+  .btn-sm:hover { opacity: .85; }
+
+  .btn-sm-outline {
+    background: transparent;
+    border: 1px solid var(--ac);
+    color: var(--ac);
+    border-radius: 7px;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .2s;
+  }
+  .btn-sm-outline:hover { background: rgba(0,212,255,.1); }
+
+  .status-line {
+    font-size: 11px;
+    margin-top: 6px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    display: none;
+  }
+  .status-line.ok  { display:block; background: rgba(0,255,136,.08); color:var(--ok);   border:1px solid rgba(0,255,136,.2); }
+  .status-line.err { display:block; background: rgba(255,68,68,.08);  color:var(--danger); border:1px solid rgba(255,68,68,.2); }
+
+  /* VEHICLE TYPE */
+  .type-grid {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 8px;
+  }
+  .type-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 10px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+  }
+  .type-btn:hover { border-color: var(--ac); color: var(--ac); }
+  .type-btn.active {
+    background: rgba(0,212,255,.1);
+    border-color: var(--ac);
+    color: var(--ac);
+  }
+  .type-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+  /* UPLOAD */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: all .2s;
+  }
+  .upload-zone:hover,.upload-zone.over { border-color:var(--ac); background:rgba(0,212,255,.03); }
+  .upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .upload-icon { font-size:28px; margin-bottom:8px; }
+  .upload-label { font-size:13px; font-weight:700; color:#fff; }
+  .upload-sub   { font-size:11px; color:var(--muted); margin-top:4px; }
+
+  /* IMAGE PREVIEW */
+  .preview-wrap {
+    margin-top: 12px;
+    display: none;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .preview-wrap img {
+    width: 100%;
+    display: block;
+    max-height: 200px;
+    object-fit: contain;
+    background: #111;
+  }
+  .preview-name {
+    font-size: 11px;
+    color: var(--ac);
+    padding: 6px 10px;
+    background: rgba(0,212,255,.06);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  /* ANALYZE BUTTON */
+  .btn-analyze {
+    width: 100%;
+    background: linear-gradient(135deg, var(--or), #ff3300);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    margin-top: 18px;
+    transition: all .2s;
+    letter-spacing: .5px;
+  }
+  .btn-analyze:hover:not(:disabled) { opacity:.88; transform:translateY(-1px); }
+  .btn-analyze:disabled { opacity:.35; cursor:not-allowed; transform:none; }
+
+  /* PROGRESS */
+  .prog-wrap { display:none; margin-top:10px; }
+  .prog-bar-bg {
+    background: var(--border);
+    border-radius: 3px;
+    height: 3px;
+    overflow: hidden;
+  }
+  .prog-bar {
+    height: 100%;
+    background: linear-gradient(90deg,var(--ac),var(--or));
+    width: 0%;
+    transition: width .4s;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:.7} 50%{opacity:1} }
+  .prog-msg { font-size:12px; color:var(--muted); text-align:center; margin-top:6px; }
+
+  /* ===== RIGHT PANEL ===== */
+  .right-panel {
+    padding: 32px 28px 60px;
+    overflow-y: auto;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 400px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .empty-icon  { font-size: 52px; margin-bottom: 16px; opacity: .5; }
+  .empty-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .empty-desc  { font-size: 13px; line-height: 1.8; max-width: 340px; }
+
+  /* RESULT */
+  #result { display: none; }
+
+  /* VERDICT BANNER */
+  .verdict-banner {
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .verdict-banner.pass    { background:rgba(0,255,136,.08); border:1.5px solid rgba(0,255,136,.3); }
+  .verdict-banner.cond    { background:rgba(255,204,0,.08);  border:1.5px solid rgba(255,204,0,.3); }
+  .verdict-banner.fail    { background:rgba(255,68,68,.08);  border:1.5px solid rgba(255,68,68,.3); }
+  .verdict-icon  { font-size: 36px; flex-shrink: 0; }
+  .verdict-text  { flex: 1; }
+  .verdict-label { font-size: 18px; font-weight: 900; color: #fff; }
+  .verdict-summary { font-size: 13px; color: var(--text); margin-top: 4px; line-height: 1.6; }
+
+  /* SCORE BADGE */
+  .score-big {
+    font-size: 32px;
+    font-weight: 900;
+    flex-shrink: 0;
+  }
+  .score-big.pass { color: var(--ok); }
+  .score-big.cond { color: var(--warn); }
+  .score-big.fail { color: var(--danger); }
+
+  /* CATEGORY SCORES */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .cat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .cat-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .cat-score { font-size: 22px; font-weight: 900; }
+  .cat-score.high { color: var(--ok); }
+  .cat-score.mid  { color: var(--warn); }
+  .cat-score.low  { color: var(--danger); }
+  .cat-bar-bg { background: var(--border); border-radius: 2px; height: 3px; margin-top: 6px; overflow:hidden; }
+  .cat-bar    { height: 100%; border-radius: 2px; }
+  .cat-bar.high { background: var(--ok); }
+  .cat-bar.mid  { background: var(--warn); }
+  .cat-bar.low  { background: var(--danger); }
+
+  /* SECTIONS */
+  .result-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .result-section-header {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .result-section-header:hover { background: rgba(255,255,255,.02); }
+  .section-icon { font-size: 16px; }
+  .section-name { font-size: 14px; font-weight: 700; color: #fff; flex: 1; }
+  .section-count {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .section-count.critical { background:rgba(255,68,68,.15);   color:var(--danger); }
+  .section-count.warning  { background:rgba(255,204,0,.15);   color:var(--warn); }
+  .section-count.ok       { background:rgba(0,255,136,.1);    color:var(--ok); }
+  .section-toggle { color: var(--muted); font-size: 12px; }
+
+  .result-section-body { padding: 16px 18px; }
+
+  /* VIOLATION ITEMS */
+  .violation-item {
+    border-radius: 7px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border-left: 3px solid;
+  }
+  .violation-item.critical { background:rgba(255,68,68,.06);  border-color:var(--danger); }
+  .violation-item.warning  { background:rgba(255,204,0,.06);  border-color:var(--warn); }
+  .violation-item.info     { background:rgba(0,212,255,.05);  border-color:var(--ac); }
+
+  .v-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .v-sev-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+  .v-sev-badge.critical { background:rgba(255,68,68,.2);  color:var(--danger); }
+  .v-sev-badge.warning  { background:rgba(255,204,0,.2);  color:var(--warn); }
+  .v-sev-badge.info     { background:rgba(0,212,255,.15); color:var(--ac); }
+  .v-rule { font-size: 11px; color: var(--muted); font-family: monospace; }
+  .v-desc { font-size: 13px; color: var(--text); }
+  .v-fix  { font-size: 12px; color: var(--ok); margin-top: 4px; }
+  .v-fix::before { content: "→ 修正: "; }
+
+  /* COLOR SWATCHES */
+  .color-swatches {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  .swatch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 7px 10px;
+  }
+  .swatch-color {
+    width: 28px;
+    height: 28px;
+    border-radius: 5px;
+    border: 1px solid rgba(255,255,255,.1);
+    flex-shrink: 0;
+  }
+  .swatch-info { font-size: 11px; line-height: 1.5; }
+  .swatch-name { font-weight: 700; color: #fff; }
+  .swatch-vals { color: var(--muted); }
+
+  /* ACTIONS */
+  .result-actions { display:flex; gap:10px; margin-top:20px; flex-wrap:wrap; }
+  .btn-action {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-action:hover { border-color:var(--ac); color:var(--ac); }
+
+  /* ERROR */
+  .error-box {
+    background: rgba(255,68,68,.08);
+    border: 1px solid rgba(255,68,68,.3);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: var(--danger);
+    font-size: 13px;
+    margin-top: 14px;
+    display: none;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .left-panel { height:auto; position:static; }
+    .cat-grid { grid-template-columns: repeat(2,1fr); }
+  }
+  @media (max-width: 500px) {
+    .cat-grid { grid-template-columns: 1fr 1fr; }
+    header { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">🚌</div>
+  <div>
+    <div class="logo-text">車体利用広告デザイン 自主審査基準チェックツール</div>
+    <div class="logo-sub">東京屋外広告協会 2026年1月改定版基準対応</div>
+  </div>
+  <div class="badge">AI審査</div>
+</header>
+
+<div class="layout">
+
+  <!-- ===== LEFT: SETTINGS ===== -->
+  <div class="left-panel">
+
+    <!-- API KEY -->
+    <div class="section-title">🔑 Anthropic API キー</div>
+    <div class="api-row">
+      <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off">
+      <button class="btn-sm" onclick="saveKey()">保存</button>
+      <button class="btn-sm-outline" onclick="testKey()">テスト</button>
+    </div>
+    <div class="status-line" id="keyStatus"></div>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">
+      ※ localStorageのみ保存。外部送信なし。<br>
+      取得: <strong>console.anthropic.com</strong> → API Keys
+    </p>
+
+    <!-- VEHICLE TYPE -->
+    <div class="section-title">🚍 車種選択</div>
+    <div class="type-grid">
+      <button class="type-btn active" data-type="bus"   onclick="selectType(this)">
+        <span class="type-icon">🚌</span>バス
+      </button>
+      <button class="type-btn"        data-type="taxi"  onclick="selectType(this)">
+        <span class="type-icon">🚕</span>タクシー
+      </button>
+      <button class="type-btn"        data-type="adcar" onclick="selectType(this)">
+        <span class="type-icon">🚐</span>広告宣伝車
+      </button>
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="section-title">📎 デザイン画像</div>
+    <div class="upload-zone" id="uploadZone"
+      ondragover="ev(event,'over')"
+      ondragleave="ev(event,'leave')"
+      ondrop="ev(event,'drop')">
+      <input type="file" id="fileInput" accept="image/*" onchange="onFile(event)">
+      <div class="upload-icon">🖼️</div>
+      <div class="upload-label">クリックまたはドラッグ</div>
+      <div class="upload-sub">PNG / JPG / WEBP（最大10MB）</div>
+    </div>
+    <div class="preview-wrap" id="previewWrap">
+      <img id="previewImg" src="" alt="preview">
+      <div class="preview-name" id="previewName"></div>
+    </div>
+    <div class="error-box" id="errBox"></div>
+
+    <!-- ANALYZE -->
+    <button class="btn-analyze" id="analyzeBtn" onclick="analyze()" disabled>
+      🔍 審査基準チェック開始
+    </button>
+    <div class="prog-wrap" id="progWrap">
+      <div class="prog-bar-bg"><div class="prog-bar" id="progBar"></div></div>
+      <div class="prog-msg" id="progMsg"></div>
+    </div>
+
+  </div>
+  <!-- /left-panel -->
+
+  <!-- ===== RIGHT: RESULT ===== -->
+  <div class="right-panel">
+
+    <!-- EMPTY STATE -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🚌</div>
+      <div class="empty-title">デザイン画像をアップロードしてください</div>
+      <div class="empty-desc">
+        東京屋外広告協会の車体利用広告デザイン自主審査基準に基づき、<br>
+        色彩・テキスト・顔写真・レイアウト・禁止コンテンツを<br>
+        AIが自動チェックします。
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="result">
+
+      <!-- VERDICT BANNER -->
+      <div class="verdict-banner" id="verdictBanner">
+        <div class="verdict-icon" id="verdictIcon">—</div>
+        <div class="verdict-text">
+          <div class="verdict-label" id="verdictLabel">—</div>
+          <div class="verdict-summary" id="verdictSummary">—</div>
+        </div>
+        <div class="score-big" id="scoreBig">—</div>
+      </div>
+
+      <!-- CATEGORY SCORES -->
+      <div class="cat-grid" id="catGrid"></div>
+
+      <!-- CRITICAL VIOLATIONS -->
+      <div class="result-section" id="criticalSection" style="display:none">
+        <div class="result-section-header" onclick="toggleSection('criticalBody')">
+          <span class="section-icon">🔴</span>
+          <span class="section-name">重大違反（即不合格）</span>
+          <span class="section-count critical" id="criticalCount">0件</span>
+          <span class="section-toggle" id="criticalToggle">▼</span>
+        </div>
+        <div class="result-section-body" id="criticalBody"></div>
+      </div>
+
+      <!-- WARNINGS -->
+      <div class="result-section" id="warnSection" style="display:none">
+        <div class="result-section-header" onclick="toggleSection('warnBody')">
+          <span class="section-icon">🟡</span>
+          <span class="section-name">警告（修正強く推奨）</span>
+          <span class="section-count warning" id="warnCount">0件</span>
+          <span class="section-toggle" id="warnToggle">▼</span>
+        </div>
+        <div class="result-section-body" id="warnBody"></div>
+      </div>
+
+      <!-- INFO -->
+      <div class="result-section" id="infoSection" style="display:none">
+        <div class="result-section-header" onclick="toggleSection('infoBody')">
+          <span class="section-icon">🔵</span>
+          <span class="section-name">参考情報</span>
+          <span class="section-count ok" id="infoCount">0件</span>
+          <span class="section-toggle" id="infoToggle">▼</span>
+        </div>
+        <div class="result-section-body" id="infoBody"></div>
+      </div>
+
+      <!-- COLOR DETAIL -->
+      <div class="result-section" id="colorSection" style="display:none">
+        <div class="result-section-header" onclick="toggleSection('colorBody')">
+          <span class="section-icon">🎨</span>
+          <span class="section-name">検出された主要色</span>
+          <span class="section-toggle" id="colorToggle">▼</span>
+        </div>
+        <div class="result-section-body" id="colorBody"></div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="result-actions">
+        <button class="btn-action" onclick="downloadJson()">💾 JSONダウンロード</button>
+        <button class="btn-action" onclick="resetAll()">🔄 別の画像をチェック</button>
+      </div>
+
+    </div>
+    <!-- /result -->
+
+  </div>
+  <!-- /right-panel -->
+
+</div>
+
+<script>
+// ===== 状態 =====
+let selectedType = "bus";
+let selectedFile = null;
+let lastResult   = null;
+
+// ===== APIキー =====
+function saveKey() {
+  const v = document.getElementById("apiKey").value.trim();
+  if (!v || v.length < 20) { showKeyStatus("APIキーを入力してください", "err"); return; }
+  localStorage.setItem("anthropic_api_key", v);
+  showKeyStatus("✅ 保存しました", "ok");
+  checkReady();
+}
+
+async function testKey() {
+  const k = getKey();
+  if (!k) { showKeyStatus("先にAPIキーを保存してください", "err"); return; }
+  showKeyStatus("⏳ テスト中...", "ok");
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": k,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:16, messages:[{role:"user",content:"Hi"}] })
+    });
+    if (r.ok) showKeyStatus("✅ 接続OK", "ok");
+    else { const d = await r.json().catch(()=>{}); showKeyStatus("❌ " + (d?.error?.message||`HTTP ${r.status}`), "err"); }
+  } catch(e) { showKeyStatus("❌ 通信エラー: " + e.message, "err"); }
+}
+
+function getKey() { return localStorage.getItem("anthropic_api_key") || document.getElementById("apiKey").value.trim(); }
+
+function showKeyStatus(msg, type) {
+  const el = document.getElementById("keyStatus");
+  el.textContent = msg;
+  el.className = "status-line " + type;
+}
+
+// ===== 車種選択 =====
+function selectType(btn) {
+  document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  selectedType = btn.dataset.type;
+}
+
+// ===== ファイル操作 =====
+function ev(e, action) {
+  e.preventDefault();
+  const zone = document.getElementById("uploadZone");
+  if (action === "over")  zone.classList.add("over");
+  if (action === "leave") zone.classList.remove("over");
+  if (action === "drop")  { zone.classList.remove("over"); handleFile(e.dataTransfer.files[0]); }
+}
+function onFile(e) { handleFile(e.target.files[0]); }
+
+function handleFile(file) {
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { showErr("ファイルサイズが10MBを超えています"); return; }
+  hideErr();
+  selectedFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById("previewImg").src = e.target.result;
+    document.getElementById("previewName").textContent = file.name;
+    document.getElementById("previewWrap").style.display = "block";
+  };
+  reader.readAsDataURL(file);
+  checkReady();
+}
+
+function checkReady() {
+  document.getElementById("analyzeBtn").disabled = !(getKey() && selectedFile);
+}
+
+// ===== エラー =====
+function showErr(msg) { const e=document.getElementById("errBox"); e.textContent=msg; e.style.display="block"; }
+function hideErr()     { document.getElementById("errBox").style.display="none"; }
+
+// ===== プログレス =====
+function setProgress(pct, msg) {
+  document.getElementById("progWrap").style.display="block";
+  document.getElementById("progBar").style.width = pct + "%";
+  document.getElementById("progMsg").textContent = msg;
+}
+function hideProgress() { document.getElementById("progWrap").style.display="none"; }
+
+// ===== プロンプト =====
+function buildPrompt(vtype) {
+  return `あなたは東京屋外広告協会の「車体利用広告デザイン自主審査基準（2026年1月改定版）」に基づく審査AIです。
+対象車種: ${vtype}
+
+画像を以下の9ステップで分析し、必ず指定のJSON形式のみで出力してください。説明文は不要です。
+
+【分析ステップ】
+1. 主要色（上位5色）をRGB・CMYK推定・マンセル推定・面積比で特定
+2. 禁止色チェック: 赤(マンセル10RP〜10R, 明度4〜6, 彩度≧12)・黄(10YR〜10Y, 明度≧7.5, 彩度≧10)・黒(N1〜N4または明度≦4かつ彩度≦0.3)を下地/過半に使用していないか
+   CMYK参考: 黄地色Y≦70%, 赤地色M≦70%+Y≦70%, 黒地色K≦70%, 赤純色面積≦1/3
+   広告宣伝車のみ: 高彩度色・原色・金銀色は面積20%以内
+3. テキスト: 行数(目安4行以内)・後部禁止表示(電話番号/URL/QR/#等)・全方面禁止(QR/クーポン)・重複記載
+4. 顔・人物: 顔の天地比(デザインスペース≦80%・車体≦50%)・身体強調・性的表現
+5. レイアウト: メイン/サブ関係・余白・統一感・繰り返しパターン(水玉/格子等)
+6. 表示位置: 屋根部分・前部・窓部分への広告有無・バス会社識別性
+7. 禁止コンテンツ: アルコール/タバコ・発光蛍光材料・信号/標識と紛らわしいデザイン・四コマ漫画・公序良俗違反
+8. 交通安全: 飛び出して見えるデザイン・距離感を惑わすデザイン(渦巻/チェック等)・過度な鮮やかさ
+9. 総合デザイン品質: 景観調和・色彩対比・シンプルさ・統一感
+
+【出力JSONのみ】
+{"vehicle_type":"${vtype}","overall_score":0,"overall_verdict":"合格|条件付き合格（修正必要）|不合格","summary":"全体所見200文字以内","categories":{"color_analysis":{"score":0,"dominant_colors":[{"color_name":"色名","rgb":[0,0,0],"cmyk_estimate":[0,0,0,0],"area_ratio":0.0,"munsell_estimate":"H V/C"}],"prohibited_color_violations":[{"color":"色名","violation_type":"禁止色種別","area_ratio":0.0,"severity":"critical|warning|info","detail":"説明"}],"high_chroma_issues":[],"cmyk_violations":[]},"text_analysis":{"score":0,"detected_text_elements":[{"content":"テキスト","position":"位置","size":"大|中|小","lines":0}],"total_text_lines":0,"violations":[{"rule_id":"基準ID","description":"説明","severity":"critical|warning|info","location":"位置"}]},"face_person_analysis":{"score":0,"faces_detected":0,"face_details":[{"position":"位置","height_ratio_design_space":0.0,"height_ratio_vehicle":0.0,"violation":false}],"body_emphasis_issues":[]},"layout_analysis":{"score":0,"main_sub_clarity":0,"spacing_adequacy":0,"consistency":0,"violations":[]},"position_analysis":{"score":0,"violations":[{"area":"屋根|前部|窓","description":"説明","severity":"critical|warning|info"}]},"content_analysis":{"score":0,"prohibited_content":[{"type":"種別","description":"説明","severity":"critical|warning|info"}]},"traffic_safety_analysis":{"score":0,"violations":[]},"design_quality":{"score":0,"landscape_harmony":0,"color_contrast_appropriateness":0,"simplicity":0,"unity":0,"notes":[]}},"critical_violations":[{"rule_id":"基準ID","category":"カテゴリ","description":"詳細説明","fix_suggestion":"修正提案"}],"warnings":[{"rule_id":"基準ID","category":"カテゴリ","description":"詳細説明","fix_suggestion":"修正提案"}],"info_notes":[{"description":"参考情報"}]}`;
+}
+
+// ===== 分析実行 =====
+async function analyze() {
+  hideErr();
+  const key = getKey();
+  if (!key || !selectedFile) return;
+
+  document.getElementById("analyzeBtn").disabled = true;
+  document.getElementById("emptyState").style.display = "none";
+  document.getElementById("result").style.display = "none";
+
+  try {
+    // base64変換
+    setProgress(20, "🖼️ 画像を読み込み中...");
+    const b64 = await toBase64(selectedFile);
+    const mime = selectedFile.type || "image/png";
+
+    setProgress(50, "🤖 AIが審査基準に基づき分析中... (30〜60秒)");
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true"
+      },
+      body: JSON.stringify({
+        model: "claude-opus-4-6",
+        max_tokens: 4096,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: mime, data: b64 } },
+            { type: "text",  text: buildPrompt(selectedType) }
+          ]
+        }]
+      })
+    });
+
+    if (!res.ok) {
+      const d = await res.json().catch(()=>({}));
+      const msg = d.error?.message || `HTTP ${res.status}`;
+      if (res.status === 401) throw new Error("APIキーが無効です");
+      if (res.status === 429) throw new Error("APIの利用制限に達しました。しばらくお待ちください");
+      throw new Error(msg);
+    }
+
+    setProgress(90, "📊 結果を生成中...");
+    const data = await res.json();
+    const raw  = data.content?.[0]?.text || "";
+
+    // JSON抽出
+    let parsed;
+    try {
+      let jsonStr = raw;
+      if (raw.includes("```json")) {
+        const s = raw.indexOf("```json") + 7;
+        const e = raw.indexOf("```", s);
+        jsonStr = raw.slice(s, e).trim();
+      } else if (raw.includes("```")) {
+        const s = raw.indexOf("```") + 3;
+        const e = raw.indexOf("```", s);
+        jsonStr = raw.slice(s, e).trim();
+      } else if (raw.trim().startsWith("{")) {
+        jsonStr = raw.trim();
+      }
+      parsed = JSON.parse(jsonStr);
+    } catch {
+      parsed = { overall_score:-1, overall_verdict:"解析エラー", summary:raw.slice(0,300), raw_response:raw };
+    }
+
+    setProgress(100, "✅ 完了");
+    await new Promise(r => setTimeout(r, 400));
+    lastResult = parsed;
+    renderResult(parsed);
+
+  } catch (err) {
+    showErr("エラー: " + err.message);
+  } finally {
+    hideProgress();
+    document.getElementById("analyzeBtn").disabled = false;
+    checkReady();
+  }
+}
+
+// ===== base64変換 =====
+function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = e => resolve(e.target.result.split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== 結果レンダリング =====
+function getScoreClass(s) {
+  if (s >= 80) return "high";
+  if (s >= 60) return "mid";
+  return "low";
+}
+
+function renderResult(r) {
+  const verdict  = r.overall_verdict || "不明";
+  const score    = r.overall_score ?? 0;
+  const summary  = r.summary || "";
+
+  // バナー
+  let cls="fail", icon="❌";
+  if (verdict.includes("条件付き")) { cls="cond"; icon="⚠️"; }
+  else if (verdict === "合格")      { cls="pass"; icon="✅"; }
+
+  document.getElementById("verdictBanner").className = "verdict-banner " + cls;
+  document.getElementById("verdictIcon").textContent  = icon;
+  document.getElementById("verdictLabel").textContent = verdict;
+  document.getElementById("verdictSummary").textContent = summary;
+  document.getElementById("scoreBig").textContent    = score + "点";
+  document.getElementById("scoreBig").className      = "score-big " + cls;
+
+  // カテゴリスコア
+  const cats = r.categories || {};
+  const catDef = [
+    ["color_analysis",          "🎨","色彩"],
+    ["text_analysis",           "📝","テキスト"],
+    ["face_person_analysis",    "👤","顔・人物"],
+    ["layout_analysis",         "📐","レイアウト"],
+    ["position_analysis",       "📍","表示位置"],
+    ["content_analysis",        "🚫","禁止内容"],
+    ["traffic_safety_analysis", "🚦","交通安全"],
+    ["design_quality",          "✨","デザイン"],
+  ];
+  const grid = document.getElementById("catGrid");
+  grid.innerHTML = "";
+  catDef.forEach(([key, ico, label]) => {
+    const s   = cats[key]?.score ?? "—";
+    const cls = typeof s === "number" ? getScoreClass(s) : "mid";
+    const pct = typeof s === "number" ? s : 0;
+    grid.innerHTML += `
+      <div class="cat-card">
+        <div class="cat-label">${ico} ${label}</div>
+        <div class="cat-score ${cls}">${s}${typeof s==="number"?"点":""}</div>
+        <div class="cat-bar-bg"><div class="cat-bar ${cls}" style="width:${pct}%"></div></div>
+      </div>`;
+  });
+
+  // 重大違反
+  const critical = r.critical_violations || [];
+  renderViolationSection("criticalSection","criticalBody","criticalCount","criticalToggle", critical, "critical");
+
+  // 警告
+  const warnings = r.warnings || [];
+  renderViolationSection("warnSection","warnBody","warnCount","warnToggle", warnings, "warning");
+
+  // 参考情報
+  const infos = r.info_notes || [];
+  if (infos.length > 0) {
+    document.getElementById("infoSection").style.display = "block";
+    document.getElementById("infoCount").textContent = infos.length + "件";
+    document.getElementById("infoBody").innerHTML =
+      infos.map(n => `<div class="violation-item info"><div class="v-desc">${n.description||""}</div></div>`).join("");
+  } else {
+    document.getElementById("infoSection").style.display = "none";
+  }
+
+  // 主要色
+  const colors = cats.color_analysis?.dominant_colors || [];
+  if (colors.length > 0) {
+    document.getElementById("colorSection").style.display = "block";
+    const swatches = colors.map(c => {
+      const [r2,g,b] = c.rgb || [200,200,200];
+      const [cc,m,y,k] = c.cmyk_estimate || [0,0,0,0];
+      const ratio = c.area_ratio ? (c.area_ratio*100).toFixed(0)+"%" : "—";
+      return `<div class="swatch">
+        <div class="swatch-color" style="background:rgb(${r2},${g},${b})"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">${c.color_name||"—"}</div>
+          <div class="swatch-vals">RGB(${r2},${g},${b})<br>CMYK(${cc},${m},${y},${k})<br>面積:${ratio} / ${c.munsell_estimate||"—"}</div>
+        </div>
+      </div>`;
+    }).join("");
+    document.getElementById("colorBody").innerHTML = `<div class="color-swatches">${swatches}</div>`;
+  } else {
+    document.getElementById("colorSection").style.display = "none";
+  }
+
+  // 表示
+  document.getElementById("emptyState").style.display = "none";
+  document.getElementById("result").style.display = "block";
+  document.getElementById("result").scrollIntoView({ behavior:"smooth", block:"start" });
+}
+
+function renderViolationSection(secId, bodyId, countId, toggleId, items, severityClass) {
+  const sec = document.getElementById(secId);
+  if (!items.length) { sec.style.display="none"; return; }
+  sec.style.display = "block";
+  document.getElementById(countId).textContent = items.length + "件";
+  document.getElementById(bodyId).innerHTML = items.map(v => `
+    <div class="violation-item ${severityClass}">
+      <div class="v-header">
+        <span class="v-sev-badge ${severityClass}">${severityClass==="critical"?"🔴 CRITICAL":"🟡 WARNING"}</span>
+        <span class="v-rule">${v.rule_id||""}</span>
+        <span class="v-rule" style="color:#888">${v.category||""}</span>
+      </div>
+      <div class="v-desc">${v.description||""}</div>
+      ${v.fix_suggestion ? `<div class="v-fix">${v.fix_suggestion}</div>` : ""}
+    </div>`).join("");
+}
+
+// ===== セクション開閉 =====
+const toggleState = {};
+function toggleSection(bodyId) {
+  const body = document.getElementById(bodyId);
+  const isOpen = toggleState[bodyId] !== false;
+  toggleState[bodyId] = !isOpen;
+  body.style.display = isOpen ? "none" : "block";
+}
+
+// ===== JSONダウンロード =====
+function downloadJson() {
+  if (!lastResult) return;
+  const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `vehicle_ad_check_${Date.now()}.json`;
+  a.click();
+}
+
+// ===== リセット =====
+function resetAll() {
+  selectedFile = null;
+  lastResult   = null;
+  document.getElementById("fileInput").value = "";
+  document.getElementById("previewWrap").style.display = "none";
+  document.getElementById("result").style.display = "none";
+  document.getElementById("emptyState").style.display = "flex";
+  hideErr();
+  checkReady();
+  window.scrollTo({ top:0, behavior:"smooth" });
+}
+
+// ===== 初期化 =====
+window.addEventListener("load", () => {
+  const saved = localStorage.getItem("anthropic_api_key");
+  if (saved) {
+    document.getElementById("apiKey").value = saved;
+    showKeyStatus("✅ 保存済みのAPIキーを読み込みました", "ok");
+  }
+  checkReady();
+});
+</script>
+</body>
+</html>
