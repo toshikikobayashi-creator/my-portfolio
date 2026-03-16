@@ -185,6 +185,20 @@
 
   .btn-save:hover { opacity: 0.85; }
 
+  .btn-test {
+    background: transparent;
+    border: 1px solid var(--ac);
+    color: var(--ac);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .btn-test:hover { background: rgba(0,212,255,0.1); }
+
   .api-status {
     font-size: 12px;
     margin-top: 8px;
@@ -581,11 +595,12 @@
     <div class="api-key-input">
       <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off">
       <button class="btn-save" onclick="saveApiKey()">保存</button>
+      <button class="btn-test" onclick="testApiKey()">接続テスト</button>
     </div>
     <div class="api-status" id="apiStatus"></div>
     <p class="api-note">
       ※ APIキーはブラウザのlocalStorageにのみ保存されます。外部サーバーには送信されません。<br>
-      ※ Anthropic APIキーの取得は <strong>console.anthropic.com</strong> から行ってください。
+      ※ Anthropic APIキーの取得は <strong>console.anthropic.com</strong> → 「API Keys」→「Create Key」
     </p>
   </div>
 
@@ -642,13 +657,46 @@ let extractedText = '';
 // ===== API キー管理 =====
 function saveApiKey() {
   const val = document.getElementById('apiKeyInput').value.trim();
-  if (!val.startsWith('sk-ant-')) {
-    showApiStatus('APIキーの形式が正しくありません（sk-ant- で始まるキーを入力してください）', 'err');
+  if (!val || val.length < 20) {
+    showApiStatus('APIキーを入力してください', 'err');
     return;
   }
   localStorage.setItem('anthropic_api_key', val);
-  showApiStatus('✅ APIキーを保存しました', 'ok');
+  showApiStatus('✅ 保存しました。「接続テスト」で動作確認できます', 'ok');
   checkReviewReady();
+}
+
+async function testApiKey() {
+  const apiKey = getApiKey();
+  if (!apiKey) { showApiStatus('先にAPIキーを保存してください', 'err'); return; }
+  showApiStatus('⏳ 接続テスト中...', 'ok');
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 16,
+        messages: [{ role: 'user', content: 'Hi' }]
+      })
+    });
+    if (res.ok) {
+      showApiStatus('✅ 接続OK！APIキーは正常です', 'ok');
+    } else {
+      const d = await res.json().catch(() => ({}));
+      const msg = d.error?.message || `HTTP ${res.status}`;
+      if (res.status === 401) showApiStatus('❌ 認証エラー：APIキーが無効です', 'err');
+      else if (res.status === 403) showApiStatus('❌ 権限エラー：このキーにAPI利用権限がありません', 'err');
+      else showApiStatus('❌ エラー: ' + msg, 'err');
+    }
+  } catch (e) {
+    showApiStatus('❌ 通信エラー: ' + e.message, 'err');
+  }
 }
 
 function loadApiKey() {
