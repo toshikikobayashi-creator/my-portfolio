@@ -1,0 +1,753 @@
+================================================================
+HUMAN AD セールスハブ - 開発指示書（最終版 v4.0）
+================================================================
+このファイルはClaude Codeへの開発指示書です。
+このシステムを以下の仕様通りに構築してください。
+各Stepが完了したら必ず俊輝に確認を取ってから次に進むこと。
+説明は小学生にもわかるレベルでお願いします。
+
+================================================================
+【0】俊輝が事前に用意するもの（Claude Codeでは取得できない）
+================================================================
+以下のサービスのアカウント作成とAPIキー取得が必要です。
+Claude Codeが「キーをください」と聞いてきたら、以下の手順で取得してください。
+
+--- 0-1. Supabase（データベース）---
+1. https://supabase.com にアクセス
+2. 「Start your project」→ GitHubアカウントでログイン
+3. 「New Project」をクリック
+4. Project name: human-ad-sales-hub
+5. Database Password: 強力なパスワードを設定（メモしておく）
+6. Region: Northeast Asia (Tokyo) を選択
+7. 「Create new project」をクリック
+8. 作成完了後、Settings → API から以下をコピー：
+   - Project URL（例: https://xxxx.supabase.co）
+   - anon public key（例: eyJhbGci...）
+   - service_role key（例: eyJhbGci...）※これは秘密にする
+
+--- 0-2. Google Maps Platform（企業データ収集）---
+1. https://console.cloud.google.com にアクセス
+2. プロジェクトを新規作成（名前: human-ad-sales-hub）
+3. 「APIとサービス」→「ライブラリ」
+4. 「Places API (New)」を検索して有効化
+   ★注意: 「Places API」ではなく「Places API (New)」を有効化すること
+   （Googleは旧APIを非推奨にしており、新APIを使う）
+5. 「認証情報」→「認証情報を作成」→「APIキー」
+6. APIキーをコピー（例: AIzaSy...）
+7. ※注意: 無料枠は月$200分。クレジットカード登録が必要だが、
+   無料枠を超えない限り課金されない。
+   心配なら「予算アラート」を$200に設定しておく。
+
+--- 0-3. Anthropic API（AI DM文面生成用）---
+★重要: Anthropic APIはclaude.aiのMax planとは別サービスです。
+Max planに入っていても、API利用には別途クレジットの追加が必要です。
+
+1. https://console.anthropic.com にアクセス
+2. claude.aiとは別にアカウント作成（同じメールでOK）
+3. 「Settings」→「Billing」→ クレジットを追加
+   - まず$5〜10で十分（DM1件生成あたり約$0.003、1000件生成しても$3程度）
+4. 「API Keys」→「Create Key」→ APIキーをコピー（例: sk-ant-...）
+
+--- 0-4. Vercel（デプロイ用）---
+1. https://vercel.com にアクセス
+2. GitHubアカウントでログイン
+3. ※これはStep 7で行うので、まだやらなくてOK
+4. ★重要: デプロイ時に「Root Directory」を human-ad-sales-hub に設定すること
+   （my-portfolioリポジトリの中のサブディレクトリにあるため）
+
+--- 0-5. 環境変数ファイル（.env.local）---
+プロジェクトのルートに .env.local ファイルを作成し、
+以下の変数名で保存すること：
+
+NEXT_PUBLIC_SUPABASE_URL=（0-1で取得したProject URL）
+NEXT_PUBLIC_SUPABASE_ANON_KEY=（0-1で取得したanon public key）
+SUPABASE_SERVICE_ROLE_KEY=（0-1で取得したservice_role key）
+GOOGLE_MAPS_API_KEY=（0-2で取得したAPIキー）
+ANTHROPIC_API_KEY=（0-3で取得したAPIキー）
+
+※ .env.local は .gitignore に必ず追加すること（GitHubに公開しない）
+
+================================================================
+【1】システム概要
+================================================================
+「HUMAN AD セールスハブ」は、ヒューマンアド（LEDバックパック広告）と
+アドトラック（LED搭載トラック広告）の営業DM送信を効率化する
+オールインワンWebアプリケーションです。
+
+3つの機能が1つのアプリで完結します：
+  ① アタックリスト自動収集（企業リストを自動生成）
+  ② AI DMジェネレーター（相手の情報に合わせてAIがDM文面を自動生成）
+  ③ 営業管理ダッシュボード（ステータス管理・フォローアップ・CSV出力）
+
+UIは全て日本語で作成すること。英語UIは不可。
+
+================================================================
+【2】技術構成
+================================================================
+- フロントエンド: Next.js 14（App Router）+ React 18 + Tailwind CSS 3
+- Node.js: v20 LTS（Vercelのデフォルトランタイムと一致させる）
+- データベース: Supabase（PostgreSQL）
+- AI DM生成: Anthropic Claude API（claude-sonnet-4-20250514）
+- データ収集: Python 3.11+（Claude Codeで実行）
+- デプロイ: Vercel（無料枠）
+- 認証: Supabase Auth（簡易パスワード認証）
+- リポジトリ: 既存の my-portfolio リポジトリ内に作成
+  （GitHubユーザー名: toshikikobayashi-creator）
+  ディレクトリ: my-portfolio/human-ad-sales-hub/
+- タイムゾーン: 全てJST（日本標準時 Asia/Tokyo）で統一
+
+--- npmパッケージ（Step 1でインストール）---
+npx create-next-app@14 human-ad-sales-hub --typescript --tailwind --app --use-npm
+cd human-ad-sales-hub
+npm install @supabase/supabase-js @anthropic-ai/sdk
+npm install papaparse（CSVパース用）
+
+--- Pythonスクリプトの配置場所 ---
+human-ad-sales-hub/scripts/ ディレクトリに配置する。
+  scripts/collect_leads.py    （メインの収集スクリプト）
+  scripts/import_csv.py       （CSVインポート用）
+  scripts/search_facebook.py  （FacebookページURL検索用）
+  scripts/requirements.txt    （Python依存関係）
+  scripts/.env                （Python用環境変数、.gitignoreに追加）
+
+Python用の.envファイルは以下の形式：
+  SUPABASE_URL=（Supabase Project URL）
+  SUPABASE_SERVICE_KEY=（service_role key）
+  GOOGLE_MAPS_API_KEY=（Google Maps APIキー）
+
+--- プロジェクト構成（App Router）---
+human-ad-sales-hub/
+├── app/
+│   ├── layout.tsx            （共通レイアウト、ナビゲーション）
+│   ├── page.tsx              （/ → ダッシュボード）
+│   ├── login/
+│   │   └── page.tsx          （/login → ログイン画面）
+│   ├── leads/
+│   │   ├── page.tsx          （/leads → リスト一覧、フィルター、ソート、一括操作）
+│   │   ├── [id]/
+│   │   │   └── page.tsx      （/leads/[id] → リード詳細・編集）
+│   │   └── new/
+│   │       └── page.tsx      （/leads/new → リード手動追加）
+│   ├── dm/
+│   │   ├── page.tsx          （/dm → DM生成画面、種別選択、AI生成）
+│   │   └── [leadId]/
+│   │       └── page.tsx      （/dm/[leadId] → 特定リードへのDM生成）
+│   ├── import/
+│   │   └── page.tsx          （/import → CSVインポート画面）
+│   └── api/
+│       └── generate-dm/
+│           └── route.ts      （/api/generate-dm → Claude API呼び出し）
+├── components/               （共通UIコンポーネント）
+├── lib/
+│   ├── supabase.ts           （Supabaseクライアント初期化）
+│   └── utils.ts              （ヘルパー関数）
+├── scripts/                  （Pythonデータ収集スクリプト）
+├── .env.local                （環境変数、.gitignoreに追加）
+└── package.json
+
+ナビゲーション（全ページ共通のサイドバーまたはヘッダー）：
+  - ダッシュボード（/）
+  - リスト一覧（/leads）
+  - DM作成（/dm）
+  - CSVインポート（/import）
+
+================================================================
+【3】Supabase テーブル設計
+================================================================
+
+--- 3-1. テーブル定義 ---
+以下の項目をカラムとして持つ。
+
+leadsテーブル:
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid()
+  company_name      TEXT NOT NULL（会社名）
+  contact_name      TEXT（担当者名、NULL可）
+  phone             TEXT（電話番号、重複判定に使用）
+  email             TEXT（メールアドレス）
+  website_url       TEXT（WebサイトURL）
+  facebook_url      TEXT（FacebookページURL、DM送信先リンク）
+  category          TEXT[]（業種カテゴリ、複数選択可）
+    選択肢: イベント企画 / 飲食・小売 / 広告代理店・PR / 店舗型ビジネス / その他
+  area_prefecture   TEXT（都道府県）
+  area_city         TEXT（市区町村）
+  priority          TEXT DEFAULT '中'（高 / 中 / 低）
+  memo              TEXT（自由記入メモ）
+  source            TEXT（収集ソース: google_maps / web_scraping / public_db / csv_import）
+  status            TEXT DEFAULT '未送信'
+    選択肢: 未送信 / 初回DM送信済 / フォロー1回目 / フォロー2回目 / フォロー3回目（最終）/ 返信あり / 商談中 / 成約 / NG
+  first_sent_at     TIMESTAMPTZ（初回DM送信日時）
+  follow1_sent_at   TIMESTAMPTZ（フォロー1回目送信日時）
+  follow2_sent_at   TIMESTAMPTZ（フォロー2回目送信日時）
+  follow3_sent_at   TIMESTAMPTZ（フォロー3回目送信日時）
+  next_follow_date  DATE（次回フォロー予定日、自動計算）
+  created_at        TIMESTAMPTZ DEFAULT now()
+  updated_at        TIMESTAMPTZ DEFAULT now()
+
+dm_historyテーブル:
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid()
+  lead_id           UUID REFERENCES leads(id) ON DELETE CASCADE
+  template_type     TEXT（使用テンプレート種別）
+  message_text      TEXT（送信したメッセージ本文）
+  sent_at           TIMESTAMPTZ DEFAULT now()
+  follow_number     INT DEFAULT 0（0=初回、1=フォロー1回目、2=2回目、3=3回目）
+
+--- 3-2. 実行SQL（Supabaseダッシュボードの SQL Editor に貼り付けて実行）---
+以下のSQLを上から順にすべて実行すること：
+
+-- テーブル作成
+CREATE TABLE leads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_name TEXT NOT NULL,
+  contact_name TEXT,
+  phone TEXT,
+  email TEXT,
+  website_url TEXT,
+  facebook_url TEXT,
+  category TEXT[] DEFAULT '{}',
+  area_prefecture TEXT,
+  area_city TEXT,
+  priority TEXT DEFAULT '中',
+  memo TEXT,
+  source TEXT,
+  status TEXT DEFAULT '未送信',
+  first_sent_at TIMESTAMPTZ,
+  follow1_sent_at TIMESTAMPTZ,
+  follow2_sent_at TIMESTAMPTZ,
+  follow3_sent_at TIMESTAMPTZ,
+  next_follow_date DATE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE dm_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  lead_id UUID REFERENCES leads(id) ON DELETE CASCADE,
+  template_type TEXT,
+  message_text TEXT,
+  sent_at TIMESTAMPTZ DEFAULT now(),
+  follow_number INT DEFAULT 0
+);
+
+-- updated_at自動更新トリガー
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER leads_updated_at
+  BEFORE UPDATE ON leads
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER dm_history_updated_at
+  BEFORE UPDATE ON dm_history
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- インデックス（検索・フィルター高速化）
+CREATE INDEX idx_leads_status ON leads(status);
+CREATE INDEX idx_leads_category ON leads USING GIN(category);
+CREATE INDEX idx_leads_area ON leads(area_prefecture);
+CREATE INDEX idx_leads_next_follow ON leads(next_follow_date);
+CREATE INDEX idx_leads_company_name ON leads(company_name);
+CREATE INDEX idx_dm_history_lead_id ON dm_history(lead_id);
+
+-- RLS無効化（開発中）
+ALTER TABLE leads DISABLE ROW LEVEL SECURITY;
+ALTER TABLE dm_history DISABLE ROW LEVEL SECURITY;
+
+--- 3-3. デプロイ時に追加で実行するSQL（Step 7で使用）---
+ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "authenticated_access" ON leads FOR ALL
+  TO authenticated USING (true) WITH CHECK (true);
+ALTER TABLE dm_history ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "authenticated_access" ON dm_history FOR ALL
+  TO authenticated USING (true) WITH CHECK (true);
+
+================================================================
+【4】アタックリスト自動収集
+================================================================
+
+--- 4-1. 収集ソースと優先順位 ---
+優先度1: Google Maps API（Places API New - Text Search）
+  - Text Search APIを使用（旧Nearby Searchではなく新APIを使う）
+  - 収集項目: 店舗名、住所、電話番号、Webサイト、評価、カテゴリ
+  - 無料枠: 月$200分
+  - Pythonライブラリ: googlemaps（Text Search対応）
+
+優先度2: Webスクレイピング
+  - Google検索結果からの企業情報収集
+  - Playwright使用（既にMCP設定済み、Windows環境では cmd /c ラッパー必要）
+  - レート制限に注意（リクエスト間隔3〜5秒）
+
+優先度3: 公開企業データベース/API
+  - 法人番号API（国税庁）: 無料、法人名・所在地
+  - その他公開情報
+
+優先度4: CSVインポート
+  - 既存のAdTruck Lead Finder 300社データを取り込み
+  - 手動で追加したリストの一括インポート
+
+--- 4-2. Google Maps 全国検索の戦略 ---
+Text Search APIで「{カテゴリキーワード} {都市名}」を検索する。
+
+検索起点リスト（優先順）：
+  東京（新宿/渋谷/銀座/池袋/品川）, 大阪（梅田/難波/天王寺）,
+  横浜, 名古屋, 札幌, 福岡, 神戸, 京都, 仙台, 広島,
+  川崎, さいたま, 千葉, 北九州, 堺, 新潟, 浜松, 静岡, 岡山, 熊本
+
+検索の実行順序：
+1. まず東京5エリア × 全カテゴリ（最優先）
+2. 次に大阪3エリア × 全カテゴリ
+3. その後、残りの都市を上記リスト順に
+4. 途中で500件を超えたら一旦停止して俊輝に報告
+
+--- 4-3. 検索カテゴリ・キーワード ---
+カテゴリ1「イベント企画会社」:
+  キーワード: イベント企画 / 展示会運営 / フェスティバル主催 / セミナー運営 / 催事企画
+
+カテゴリ2「飲食・小売チェーン」:
+  キーワード: 新規出店 / グランドオープン / キャンペーン / フランチャイズ / 飲食チェーン
+
+カテゴリ3「広告代理店・PR・マーケ会社」:
+  キーワード: 広告代理店 / PR会社 / マーケティング会社 / ブランディング / プロモーション
+
+カテゴリ4「店舗型ビジネス」:
+  キーワード: 不動産会社 / フィットネスジム / 美容サロン / クリニック / 学習塾
+
+カテゴリ5「その他（広告予算がある企業）」:
+  キーワード: IT企業 / アプリ運営 / ECサイト / エンタメ / レジャー
+
+エリア: 全国対応（都道府県・市区町村で絞り込み可能にする）
+目標件数: 初回500件以上
+
+--- 4-4. FacebookページURL自動収集 ---
+企業データ収集後、以下の追加ステップでFacebookページURLを取得する：
+1. 収集した各企業について、Googleで「{会社名} Facebook」を検索
+2. 検索結果からfacebook.comのURLを抽出
+3. facebook_urlカラムに保存
+4. 見つからなかった場合はNULL（空欄）のまま
+5. 精度は約80%。見つからなかったものは手動で後から入力可能
+※ レート制限に注意: 検索間隔は5〜10秒空ける
+
+--- 4-5. 重複排除ルール ---
+- 第1判定: 電話番号が完全一致 → 重複と判定
+- 第2判定: 会社名の類似度が80%以上 → 重複候補フラグ
+  （Pythonの標準ライブラリ difflib.SequenceMatcher を使用）
+  （「株式会社」「(株)」「有限会社」等を事前に除去してから比較）
+- 重複時は情報が多い方を残し、他ソースの情報をマージ
+
+--- 4-6. 既存データ統合 ---
+- AdTruck Lead Finderの300社プールをCSVインポートで統合
+- CSVの場所: まずmy-portfolioリポジトリ内と ~/Downloads を検索
+  → 見つからない場合は俊輝に「CSVファイルの場所を教えてください」と聞く
+  → それでも見つからなければスキップして新規収集を優先
+- インポート時に自動重複チェック
+- カテゴリ「アドトラック」として自動タグ付け
+- CSVインポート機能自体はUIに組み込む（後から手動でもインポートできるように）
+
+--- 4-6-2. CSVインポートのフォーマットルール ---
+CSVの列名はバラバラな場合があるため、以下のマッピングルールで自動判定する：
+
+会社名 → company_name（列名候補: 会社名, 企業名, company_name, company, 名称, 法人名）
+担当者 → contact_name（列名候補: 担当者, 担当者名, contact, name, 氏名）
+電話番号 → phone（列名候補: 電話, 電話番号, TEL, tel, phone）
+メール → email（列名候補: メール, メールアドレス, email, mail, Email）
+サイト → website_url（列名候補: URL, サイト, HP, ホームページ, website, url）
+Facebook → facebook_url（列名候補: Facebook, FB, facebook, fb_url）
+業種 → category（列名候補: 業種, カテゴリ, category, 分類）
+都道府県 → area_prefecture（列名候補: 都道府県, 県, prefecture, 所在地）
+市区町村 → area_city（列名候補: 市区町村, 市, city, 住所）
+
+マッピングルール:
+- CSVアップロード後、まず列名を自動判定してプレビューを表示
+- 「この列 → このフィールド」の対応表をユーザーに見せる
+- 間違っていたらドロップダウンで手動修正できるUI
+- 「インポート実行」ボタンで確定
+- 文字コード: UTF-8とShift_JIS両方に対応する（日本語CSVはShift_JISが多い）
+
+--- 4-7. エラー処理・リトライ ---
+- API制限やネットワークエラー時、途中まで収集したデータはDBに保存
+- 次回実行時は「最後に収集した地点」から再開できるようにする
+  （processed_areasテーブルまたはJSONファイルで進捗管理）
+- Google Maps APIの月$200上限に達した場合は自動停止し、
+  「API上限に達しました。Webスクレイピングに切り替えます」と通知
+- 3回リトライしても失敗した場合はスキップしてログに記録
+
+--- 4-8. Python依存関係 ---
+requirements.txt を作成し、以下を記載：
+
+googlemaps>=4.10.0
+supabase>=2.0.0
+playwright>=1.40.0
+python-dotenv>=1.0.0
+
+※ difflib は Python標準ライブラリのためrequirements.txtには含めない
+※ 会社名類似度判定には difflib.SequenceMatcher を使用する
+
+インストール手順（Claude Codeで実行）：
+pip install -r requirements.txt
+playwright install chromium
+
+================================================================
+【5】AI DMジェネレーター
+================================================================
+
+--- 5-1. 仕組み ---
+固定テンプレートではなく、Anthropic Claude APIを使って
+相手の企業情報に合わせたDMを自動生成する。
+
+使用モデル: claude-sonnet-4-20250514
+API呼び出し: Next.jsのAPI Route（/api/generate-dm）からサーバーサイドで実行
+※ APIキーはサーバーサイドのみで使用（クライアントに露出しない）
+
+--- 5-2. APIレート制限 ---
+/api/generate-dm にレート制限を実装すること：
+- 1ユーザーあたり: 1分間に最大10回まで
+- 実装方法: メモリ内のMap（IPまたはセッション単位）で簡易管理
+  （本格的なものは後からRedis等で強化可能）
+- 制限超過時のレスポンス: 429 Too Many Requests
+  UIに「少し待ってから再度お試しください」と日本語で表示
+
+--- 5-3. DM生成フロー ---
+1. リスト画面から相手を選択
+2. 以下の情報が自動で入力される：
+   - 会社名、担当者名、業種カテゴリ、エリア
+3. ユーザーがDMの種類を選択：
+   種別A: ヒューマンアド提案（LEDバックパック広告の提案）
+   種別B: アドトラック提案（LED搭載トラック広告の提案）
+   種別C: セット提案（両サービス組み合わせ）
+   種別D: フォロー1回目（軽いリマインド）
+   種別E: フォロー2回目（価値提供型）
+   種別F: フォロー3回目（ラストチャンス型）
+4. 追加の指示欄（任意）：
+   - 「イベント集客に焦点を当てて」「新規出店の話題に触れて」等
+5. 候補日時の入力欄：3つ（手動入力、将来的にGoogleカレンダー自動取得）
+6. 「AIで生成」ボタン → ローディング表示 → Claude APIがDM文面を生成
+7. 生成されたDMをプレビュー → 自由に編集可能
+8. 「コピー」ボタンでクリップボードにコピー
+9. FacebookページリンクからDM画面に遷移して貼り付け・手動送信
+
+--- 5-4. AIへのプロンプト（API Routeに組み込む）---
+以下のシステムプロンプトをClaude APIに送る：
+
+"""
+あなたは株式会社HUMAN ADの営業担当です。
+Facebook DMで企業にアプローチするためのメッセージを作成してください。
+
+【HUMAN ADのサービス】
+・ヒューマンアド: LEDバックパック（Jiatean JTA-WT32-BA）を背負ったウォーカーが
+  街中を歩く移動型広告サービス。歩行者への直接的なアプローチが可能。
+・アドトラック: 大型LEDビジョンを搭載したトラックによる走行広告サービス。
+  動画・静止画で圧倒的なインパクトのあるPRが可能。走行ルート・スケジュールは柔軟にカスタマイズ可能。
+
+【メッセージルール】
+・350〜550文字で作成
+・冒頭は「{担当者名}様」または「ご担当者様」で始める
+・「突然のご連絡失礼いたします。株式会社HUMAN ADの小林と申します。」を必ず入れる
+・相手の会社名と事業内容に必ず触れる
+・料金は絶対に記載しない（「詳細は打ち合わせでご説明いたします」とする）
+・候補日時を3つ入れる
+・嘘や架空の実績は絶対に入れない
+・丁寧だが堅すぎない、親しみやすいトーンで
+・最後は「何卒よろしくお願いいたします。」で締める
+
+【フォローの場合】
+・フォロー1回目: 前回の連絡に軽く触れる。しつこくしない。
+・フォロー2回目: 新しい情報や事例を提供する形で。
+・フォロー3回目: 最後の連絡であることを伝え、今後も機会があればと締める。
+"""
+
+ユーザーメッセージとして以下を送る：
+"""
+【送信先情報】
+会社名: {company_name}
+担当者名: {contact_name}（空欄の場合は「ご担当者様」）
+業種: {category}
+エリア: {area_prefecture} {area_city}
+Webサイト: {website_url}
+
+【DM種別】{選択されたDM種別}
+【候補日時】{date1}, {date2}, {date3}
+【追加指示】{ユーザーの自由入力}
+
+上記情報を踏まえて、最適なDMメッセージを1通作成してください。
+"""
+
+--- 5-5. AI生成エラー時のフォールバック ---
+Claude APIがエラーを返した場合の対処：
+1. タイムアウト（30秒）: 「生成に時間がかかっています。再試行してください」
+2. 429エラー（レート制限）: 「APIが混み合っています。30秒後に再試行してください」
+3. 500エラー（サーバーエラー）: 「一時的なエラーです。しばらく待って再試行してください」
+4. その他のエラー: 「DM生成に失敗しました。手動で文面を入力してください」
+
+全てのエラーで「手動入力に切り替える」ボタンを表示し、
+テキストエリアに直接入力できるフォールバックUIを提供する。
+AIが使えなくても営業は止まらないようにする。
+
+--- 5-6. 文字数チェック ---
+- 生成されたDMの文字数をリアルタイム表示
+- 350〜550文字: 緑（OK）
+- 350文字未満: 赤（短すぎ）
+- 550文字超: 赤（長すぎ）
+- 範囲外の場合は「再生成」ボタンで再度AIに生成させられる
+
+--- 5-7. 送信フロー ---
+AIでDM生成 → プレビュー・編集 → コピーボタン → FacebookのDM画面に貼り付け → 手動送信
+※ 自動送信は行わない（Facebook規約遵守）
+
+--- 5-8. Facebook DM画面への導線 ---
+facebook_urlが保存されている場合：
+  URL変換ロジック:
+  1. https://www.facebook.com/{ページ名} → https://m.me/{ページ名} に変換
+  2. https://www.facebook.com/{ページ名}/ → 末尾スラッシュ除去してから変換
+  3. https://facebook.com/{ページ名} → www付きに正規化してから変換
+
+  変換できないケース（フォールバック）:
+  - profile.php?id=XXX 形式（個人ページ）→ m.me変換不可
+  - /people/ を含むURL → m.me変換不可
+  - /groups/ を含むURL → グループなのでDM不可
+  上記の場合は元のfacebook_urlをそのまま「Facebookページを開く」リンクで表示し、
+  ユーザーに手動でDMボタンを探してもらう。
+
+  ボタンテキスト:
+  - 変換成功時: 「FacebookでDMを開く」（m.meリンク）
+  - 変換不可時: 「Facebookページを開く」（元URLリンク）
+
+facebook_urlが空欄の場合：
+  - 「Facebook未登録」と表示
+  - 「Facebookで検索する」リンクを表示
+    → https://www.facebook.com/search/pages/?q={会社名} に遷移
+
+--- 5-9. 候補日時の管理 ---
+現在（v1）: 手動入力（テキストフィールド × 3つ）
+  - プレースホルダー例: 「来週火曜 14:00」「来週水曜 11:00」「来週木曜 15:00」
+
+将来対応（v2で追加予定）:
+  - Googleカレンダー連携（n8n経由で空き時間を自動取得）
+  - 空き時間から候補を自動提案
+  - ※現時点ではUIに「Googleカレンダー連携（準備中）」のグレーアウトボタンを
+    配置しておくこと（将来の導線確保）
+
+================================================================
+【6】ステータス管理・フォローアップ
+================================================================
+
+--- 6-1. ステータスフロー ---
+未送信 → 初回DM送信済 → フォロー1回目 → フォロー2回目 → フォロー3回目（最終）→（手動でNG判断）
+                ↓              ↓              ↓              ↓
+              返信あり ←←←←←←←←←←←←←←←←←←←←←←←←←←←
+                ↓
+              商談中
+                ↓
+              成約
+
+--- 6-2. フォロータイミング（全てJST基準で計算）---
+- フォロー1回目: 初回DM送信から3日後
+- フォロー2回目: フォロー1から4日後
+- フォロー3回目（最終）: フォロー2から7日後
+- next_follow_dateは送信時に自動計算してDBに保存
+- 日付計算は全て Asia/Tokyo タイムゾーンで行うこと
+
+--- 6-3. フォロー3回目後のNG判定 ---
+フォロー3回目を送信後、返信がなくてもステータスは「フォロー3回目（最終）」のまま。
+NGへの変更は手動で行う（自動NG化はしない）。
+理由: 時間が経ってから返信が来る場合があるため、人間が判断する。
+
+--- 6-4. フォローアラート ---
+ダッシュボードに「今日のフォロー対象」セクションを表示
+- next_follow_dateが今日（JST）以前のリードを自動抽出
+- ワンクリックでDM生成画面に遷移（フォロー種別を自動選択）
+- 件数バッジ表示（例: 「今日のフォロー対象: 12件」）
+
+--- 6-5. フォローテンプレート自動選択 ---
+- フォロー回数に応じてDM種別を自動推薦
+  - 1回目: 種別D（リマインド型）
+  - 2回目: 種別E（価値提供型）
+  - 3回目: 種別F（ラストチャンス型）
+
+================================================================
+【7】ダッシュボード
+================================================================
+
+--- 7-1. 集計数値（トップに表示）---
+- 総リード数
+- 未送信
+- 送信済み（初回+フォロー合計）
+- 返信あり
+- 商談中
+- 成約
+- NG
+
+--- 7-2. フィルター ---
+- ステータス別
+- カテゴリ別
+- エリア別（都道府県）
+- 優先度別（高/中/低）
+- 収集ソース別
+- フリーワード検索（会社名・担当者名・メモ）
+
+--- 7-3. ソート ---
+- 収集日（新しい順/古い順）
+- 最終更新日
+- 会社名（あいうえお順）
+- 優先度
+- next_follow_date（フォロー期限順）
+
+--- 7-4. ページネーション ---
+- 1ページ50件表示
+- ページ番号方式（1, 2, 3...）
+- 全件数と現在のページ位置を表示（例: 「231〜280件目 / 全523件」）
+
+--- 7-5. CSV出力 ---
+- 全データエクスポート
+- フィルター済みデータのみエクスポート
+- エクスポート項目は全フィールド
+- ファイル名: HUMAN_AD_リスト_YYYY-MM-DD.csv
+
+--- 7-6. モバイル対応 ---
+- Tailwind CSSでレスポンシブデザイン
+- 外出先でもスマホからステータス更新可能
+- PC: テーブル表示
+- スマホ: カード型UIに自動切り替え（横幅768px以下）
+
+--- 7-7. リード管理操作 ---
+個別操作:
+  - リードの追加（手動入力フォーム）
+  - リードの編集（全フィールド編集可能）
+  - リードの削除（確認ダイアログ付き、削除すると関連dm_historyも自動削除）
+
+一括操作（チェックボックスで複数選択）:
+  - 一括ステータス変更（例: 選択した20件をまとめて「NG」に）
+  - 一括削除（確認ダイアログ付き「○件のリードを削除しますか？」）
+  - 一括カテゴリ変更
+  - 一括優先度変更
+
+================================================================
+【8】認証・チーム共有
+================================================================
+- Supabase Authで簡易パスワード認証
+- まずはメールアドレス+パスワードでログイン
+- 共有対象: 俊輝さん + 溝口さん（+ 将来的にチーム追加）
+- 全ユーザーが全データを閲覧・編集可能（権限分けは後から）
+- ログインページのデザインも日本語で作成
+
+================================================================
+【9】Vercelデプロイ設定
+================================================================
+my-portfolioリポジトリ内のサブディレクトリにアプリがあるため、
+Vercelでの設定に注意が必要：
+
+1. Vercelで「Import Project」→ my-portfolioリポジトリ選択
+2. 「Root Directory」を human-ad-sales-hub に設定（★重要）
+3. Framework Preset: Next.js（自動検出されるはず）
+4. Node.js Version: 20.x
+5. Environment Variables に以下を設定：
+   - NEXT_PUBLIC_SUPABASE_URL
+   - NEXT_PUBLIC_SUPABASE_ANON_KEY
+   - SUPABASE_SERVICE_ROLE_KEY
+   - GOOGLE_MAPS_API_KEY
+   - ANTHROPIC_API_KEY
+6. 「Deploy」をクリック
+
+※ 既存のポートフォリオサイトとは別のVercelプロジェクトとして作成する
+※ 既存のポートフォリオは影響を受けない
+
+================================================================
+【10】開発ステップ（この順番で進める）
+================================================================
+
+Step 1: プロジェクト初期化 + Supabaseセットアップ
+  - my-portfolioリポジトリ内に human-ad-sales-hub/ ディレクトリ作成
+  - Next.js 14（App Router）+ Tailwind CSS 3 初期セットアップ
+  - package.json で Node.js >= 20 を engines に指定
+  - .env.local ファイル作成（俊輝がAPIキーを入力）
+  - .gitignore に .env.local を追加
+  - Supabaseに接続確認
+  - 【3-2】のSQLを全て提示して俊輝がSupabaseダッシュボードで実行
+  → 完了したら俊輝に確認
+
+Step 2: データ収集スクリプト（Python）
+  - requirements.txt作成 + インストール
+  - Google Maps Places API (New) Text Searchで東京→大阪→主要都市の順に企業を収集
+  - Webスクレイピングで追加収集
+  - Googleで「会社名 + Facebook」を検索してFacebookページURL取得
+  - 重複排除処理（difflib.SequenceMatcher使用）
+  - Supabaseに直接挿入
+  - 途中保存・再開機能（進捗管理）
+  - 既存300社CSVインポート機能（CSVが見つからない場合はスキップ可）
+  - 目標: まず500件以上収集
+  → 完了したら俊輝に確認（何件集まったか報告）
+
+Step 3: 管理画面
+  - リスト表示画面（テーブル表示、フィルター、ソート、検索）
+  - ページネーション（50件/ページ）
+  - ステータス変更機能（ドロップダウンで変更）
+  - リード詳細画面（全情報表示・編集）
+  - リード手動追加画面
+  - リード削除機能（確認ダイアログ付き）
+  - 一括操作（チェックボックス → ステータス/カテゴリ/優先度変更、一括削除）
+  - レスポンシブ対応（スマホ: カード型UI）
+  → 完了したら俊輝に確認
+
+Step 4: AI DMジェネレーター
+  - /api/generate-dm API Route作成（Claude API呼び出し + レート制限）
+  - DM種別選択UI（A〜F）
+  - リストから相手選択 → 情報自動入力
+  - 追加指示欄（自由入力）
+  - 候補日時入力欄（3つ、手動入力）
+  - 「Googleカレンダー連携（準備中）」グレーアウトボタン配置
+  - 「AIで生成」ボタン → ローディング表示 → プレビュー
+  - エラー時のフォールバック（手動入力切り替えボタン）
+  - 文字数カウンター（350〜550文字の範囲チェック）
+  - 再生成ボタン
+  - 自由編集エリア
+  - コピーボタン
+  - FacebookページURLへの導線（m.me変換 or 検索リンク）
+  - 送信記録（dm_historyに保存）
+  - ステータス自動更新
+  → 完了したら俊輝に確認
+
+Step 5: フォローアップ機能
+  - フォロータイミング自動計算（JST基準）
+  - 「今日のフォロー対象」アラート表示（件数バッジ付き）
+  - フォロー用DM種別自動推薦（D/E/F）
+  - フォロー送信記録
+  - next_follow_date自動更新
+  - フォロー3回後は手動NG判断（自動NG化しない）
+  → 完了したら俊輝に確認
+
+Step 6: ダッシュボード・CSV出力
+  - 集計数値カード（リアルタイム更新）
+  - CSV全データエクスポート
+  - フィルター済みエクスポート
+  - CSVインポート画面（UIからファイルアップロード）
+  → 完了したら俊輝に確認
+
+Step 7: Vercelデプロイ・チーム共有
+  - GitHubにpush
+  - Vercelにデプロイ（Root Directoryをhuman-ad-sales-hubに設定、Node.js 20.x）
+  - 環境変数設定（5つ）
+  - Supabase RLS有効化 + ポリシー設定（【3-3】のSQL実行）
+  - ログイン画面作成
+  - 俊輝アカウント作成
+  - 溝口さん用アカウント作成
+  - 動作確認（PC + スマホ）
+  → 完了したら俊輝に確認
+
+================================================================
+【11】重要ルール
+================================================================
+- Facebook自動送信は絶対にしない（規約違反でアカウントBAN）
+- DM送信は必ず手動（ツールはAI生成とコピーのみ）
+- AIが生成したDMに嘘や捏造情報が含まれていないか、送信前に必ず目視確認
+- 料金情報はDMに入れない（ヒューマンアド・アドトラック両方）
+- 各Stepが完了したら必ず俊輝に確認を取ってから次に進む
+- 説明は小学生にもわかるレベルでお願いします
+- UIは全て日本語で作成（英語UI禁止）
+- タイムゾーンは全てJST（Asia/Tokyo）
+- エラーが出たら原因と対処法を日本語で丁寧に説明する
+- .env.local は絶対にGitHubにpushしない
+- ANTHROPIC_API_KEYはサーバーサイド（API Route）のみで使用
+================================================================

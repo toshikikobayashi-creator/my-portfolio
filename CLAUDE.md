@@ -159,3 +159,149 @@ Email: toshiki.kobayashi@wein.co.jp
 - 日程候補が3つあるか
 - 「突然のご連絡失礼します」で始めていないか
 - 「ご検討いただけますと幸いです」で終わっていないか
+# HUMAN AD セールスハブ
+
+## プロジェクト概要
+ヒューマンアド（LEDバックパック広告）とアドトラック（LED搭載トラック広告）の
+Facebook DM営業を効率化するオールインワンWebアプリ。
+UIは全て日本語。タイムゾーンは全てJST（Asia/Tokyo）。
+
+## リポジトリ
+既存の my-portfolio リポジトリ内の human-ad-sales-hub/ ディレクトリに構築。
+GitHubユーザー名: toshikikobayashi-creator
+Vercelデプロイ時は Root Directory を human-ad-sales-hub に設定。
+
+## 3つのコア機能
+1. **アタックリスト自動収集** - Google Maps Places API (New) Text Search / Webスクレイピング / 公開DB / CSVインポートで500件以上生成 + Google「会社名+Facebook」自動検索でFB URL取得
+2. **AI DMジェネレーター** - Claude API（claude-sonnet-4-20250514）で相手の企業情報に合わせたDMを自動生成→コピーしてFacebookに貼り付け（料金はDMに入れない）
+3. **営業管理ダッシュボード** - ステータス管理・3回フォロー・一括操作・チーム共有・CSV入出力
+
+## 技術スタック
+- フロントエンド: Next.js 14 (App Router) + React 18 + Tailwind CSS 3
+- Node.js: v20 LTS
+- DB: Supabase (PostgreSQL)
+- AI DM生成: Anthropic Claude API（/api/generate-dm、サーバーサイドのみ、レート制限あり）
+- データ収集: Python 3.11+（Google Maps API + Playwright + 公開DB）
+- デプロイ: Vercel（Root Dir: human-ad-sales-hub, Node.js 20.x）
+- 認証: Supabase Auth（簡易パスワード）
+
+## 環境変数（.env.local）※絶対にGitHubにpushしない
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- GOOGLE_MAPS_API_KEY
+- ANTHROPIC_API_KEY（サーバーサイドのみ。Max planとは別、console.anthropic.comで別途クレジット追加が必要）
+
+## Python依存関係（requirements.txt）
+googlemaps>=4.10.0, supabase>=2.0.0, playwright>=1.40.0, python-dotenv>=1.0.0
+※ difflib は標準ライブラリのためrequirements.txtに含めない
+
+## npmパッケージ
+@supabase/supabase-js, @anthropic-ai/sdk, papaparse（CSVパース用）
+
+## Pythonスクリプト配置
+human-ad-sales-hub/scripts/ に配置:
+collect_leads.py, import_csv.py, search_facebook.py, requirements.txt, .env
+
+## ページ構成（App Router）
+/           → ダッシュボード（集計数値・フォローアラート）
+/login      → ログイン画面
+/leads      → リスト一覧（フィルター・ソート・一括操作・ページネーション）
+/leads/[id] → リード詳細・編集
+/leads/new  → リード手動追加
+/dm         → DM生成画面（種別選択・AI生成）
+/dm/[leadId]→ 特定リードへのDM生成
+/import     → CSVインポート画面
+/api/generate-dm → Claude API呼び出し（サーバーサイド）
+ナビゲーション: ダッシュボード / リスト一覧 / DM作成 / CSVインポート
+
+## DB設計（Supabase）
+
+### leads テーブル
+id(UUID PK), company_name(TEXT NOT NULL), contact_name, phone, email,
+website_url, facebook_url, category(TEXT[]), area_prefecture, area_city,
+priority(TEXT DEFAULT '中'), memo, source, status(TEXT DEFAULT '未送信'),
+first_sent_at, follow1_sent_at, follow2_sent_at, follow3_sent_at, next_follow_date,
+created_at, updated_at（トリガーで自動更新）
+
+### dm_history テーブル
+id(UUID PK), lead_id(UUID FK ON DELETE CASCADE), template_type, message_text,
+sent_at, follow_number(INT DEFAULT 0)
+
+### 実行SQL: 【開発指示書 セクション3-2】に完全なCREATE TABLE文・トリガー・インデックスあり
+### RLS: 開発中は無効、デプロイ時にauthenticated_accessポリシー有効化
+
+## Google Maps全国検索戦略
+Places API (New) Text Searchで「{キーワード} {都市名}」検索。
+順序: 東京5エリア→大阪3エリア→横浜→名古屋→札幌→福岡→...（人口順）
+500件超えたら一旦停止して報告。
+
+## AI DM生成
+- /api/generate-dm（サーバーサイド）、レート制限: 1ユーザー10回/分
+- DM種別: A.ヒューマンアド B.アドトラック C.セット D.フォロー1 E.フォロー2 F.フォロー3
+- フロー: 相手選択→情報自動入力→種別選択→追加指示→候補日時3つ→AI生成→編集→コピー→手動送信
+- エラー時: エラーメッセージ + 「手動入力に切り替える」ボタン（AIなしでも営業は止まらない）
+- 文字数: 350〜550文字（緑=OK、赤=範囲外）、再生成ボタンあり
+- 料金は絶対にDMに入れない（プロンプトで制御）
+
+## Facebook DM導線
+- FB URLあり → m.me/{ページ名} に変換してリンク
+  - 変換不可（profile.php?id=XX / /people/ / /groups/）→ 元URLで「Facebookページを開く」リンク
+- FB URLなし → 「Facebook未登録」+ facebook.com/search/pages/?q={会社名} 検索リンク
+
+## CSVインポートのフォーマット
+- 列名自動判定（日本語/英語両対応）: 会社名→company_name, 電話→phone 等
+- アップロード後にマッピングプレビュー表示→手動修正可→インポート実行
+- UTF-8とShift_JIS両方に対応
+
+## 候補日時
+- v1: 手動入力（テキスト×3）
+- v2（将来）: Googleカレンダー連携（n8n経由）
+- UIに「Googleカレンダー連携（準備中）」グレーアウトボタン配置
+
+## ステータスフロー
+未送信→初回DM送信済→フォロー1(3日後)→フォロー2(4日後)→フォロー3/最終(7日後)
+→手動でNG判断（自動NG化しない、遅れて返信が来る場合があるため）
+いずれの段階でも→返信あり→商談中→成約
+
+## リード管理操作
+個別: 追加・編集・削除（確認ダイアログ付き、dm_historyもCASCADE削除）
+一括: チェックボックス複数選択→ステータス/カテゴリ/優先度変更、一括削除
+
+## 重複排除
+電話番号完全一致→重複。会社名類似度80%以上（difflib.SequenceMatcher、「株式会社」等除去後比較）→重複候補。重複時は情報多い方を残しマージ。
+
+## 既存データ統合
+AdTruck Lead Finder 300社: my-portfolio内と~/Downloads検索→なければ聞く→なければスキップ。UIにCSVインポート機能あり。
+
+## エラー処理
+データ収集: 途中保存・再開可、API上限→Webスクレイピング切替、3回リトライ失敗→スキップ+ログ
+AI生成: タイムアウト/429/500→日本語エラー表示+手動入力フォールバック
+
+## ページネーション
+50件/ページ、ページ番号方式、「231〜280件目 / 全523件」表示
+
+## モバイル対応
+PC: テーブル / スマホ（768px以下）: カード型UI
+
+## チーム共有
+俊輝+溝口さん+将来チーム追加。全員閲覧・編集可。
+
+## 禁止事項
+- Facebook自動送信禁止（BAN確定）
+- DM手動送信のみ。捏造情報禁止。料金DM記載禁止
+- .env.localのGitHub公開禁止。ANTHROPIC_API_KEYクライアント側露出禁止
+
+## 開発ステップ
+1. 初期化+Supabase（Next.js 14+Tailwind3、テーブル+トリガー+インデックス+RLS無効）
+2. データ収集Python（Places API New Text Search、500件+FB URL+300社インポート）
+3. 管理画面（リスト・フィルター・ソート・ページネーション・削除・一括操作・レスポンシブ）
+4. AI DMジェネレーター（Claude API+レート制限・種別A〜F・エラーフォールバック・文字数チェック・コピー・FB導線・送信記録）
+5. フォローアップ（JST自動計算・アラート・種別自動推薦・手動NG判断）
+6. ダッシュボード・CSV出力・CSVインポートUI
+7. Vercelデプロイ（Root Dir+Node.js20.x+環境変数5つ）・RLS有効化・チーム共有
+
+## 開発ルール
+- 各Step完了→俊輝に確認→次へ
+- 説明は小学生レベル
+- エラーは原因+対処法を日本語で
