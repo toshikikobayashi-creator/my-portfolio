@@ -15,6 +15,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
   const [form, setForm] = useState<Partial<Lead>>({})
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [fetchingRep, setFetchingRep] = useState(false)
 
   useEffect(() => {
     const fetch = async () => {
@@ -55,9 +56,9 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
 
   if (!lead) return <div className="p-8 text-center text-gray-400">読み込み中...</div>
 
-  const { url: messengerUrl, isDirect } = lead.facebook_url
+  const { url: messengerUrl } = lead.facebook_url
     ? toMessengerUrl(lead.facebook_url)
-    : { url: '', isDirect: false }
+    : { url: '' }
 
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto">
@@ -69,23 +70,44 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
 
       {/* アクションボタン */}
       <div className="flex gap-2 mb-6 flex-wrap">
-        <Link href={`/dm/${lead.id}`}>
-          <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
-            ✉️ DM作成
-          </button>
+        <Link href={`/dm/${lead.id}`}
+          className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
+          ✉️ DM作成
         </Link>
         {lead.facebook_url ? (
-          <a href={messengerUrl} target="_blank" rel="noopener noreferrer">
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-              {isDirect ? 'FacebookでDMを開く' : 'Facebookページを開く'}
-            </button>
-          </a>
+          <button
+            onClick={() => window.open(messengerUrl, '_blank')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
+            💬 Facebook DM
+          </button>
         ) : (
-          <a href={`https://www.facebook.com/search/pages/?q=${encodeURIComponent(lead.company_name)}`} target="_blank" rel="noopener noreferrer">
-            <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors">
-              Facebookで検索
+          <>
+            {/* Facebook：名前＋会社名で検索 */}
+            <button
+              onClick={() => {
+                const q = lead.contact_name
+                  ? `${lead.contact_name} ${lead.company_name}`
+                  : lead.company_name
+                window.open(`https://www.facebook.com/search/people?q=${encodeURIComponent(q)}`, '_blank')
+              }}
+              className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors"
+            >
+              📘 FB検索
             </button>
-          </a>
+            {/* Google検索 */}
+            <button
+              onClick={() => {
+                const q = lead.contact_name
+                  ? `${lead.contact_name} ${lead.company_name} facebook`
+                  : `${lead.company_name} 代表者 facebook`
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, '_blank')
+              }}
+              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+            >
+              🔍 Google
+            </button>
+          </>
         )}
         <button onClick={() => setEditing(!editing)}
           className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
@@ -108,9 +130,44 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">担当者名</label>
-                <input value={form.contact_name ?? ''} onChange={(e) => set('contact_name', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">担当者名（代表者）</label>
+                <div className="flex gap-1">
+                  <input value={form.contact_name ?? ''} onChange={(e) => set('contact_name', e.target.value)}
+                    placeholder="例: 田中太郎"
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  {/* AIで代表者名を自動取得 */}
+                  <button
+                    type="button"
+                    disabled={fetchingRep}
+                    onClick={async () => {
+                      setFetchingRep(true)
+                      try {
+                        const res = await fetch('/api/fetch-representative', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            company_name: form.company_name,
+                            website_url: form.website_url,
+                          }),
+                        })
+                        const data = await res.json()
+                        if (data.name && data.name !== '不明') {
+                          set('contact_name', data.name)
+                        } else {
+                          alert('代表者名を取得できませんでした。手動で入力してください。')
+                        }
+                      } catch {
+                        alert('取得に失敗しました')
+                      } finally {
+                        setFetchingRep(false)
+                      }
+                    }}
+                    className="px-2 py-2 bg-purple-100 text-purple-700 rounded-lg text-xs font-medium hover:bg-purple-200 transition-colors disabled:opacity-50 whitespace-nowrap"
+                    title="AIでWebサイトから代表者名を自動取得"
+                  >
+                    {fetchingRep ? '取得中...' : '🤖 AI取得'}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">電話番号</label>
@@ -119,10 +176,11 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Facebook URL</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">代表者 Facebook（個人アカウントURL）</label>
               <input value={form.facebook_url ?? ''} onChange={(e) => set('facebook_url', e.target.value)}
-                placeholder="https://www.facebook.com/..."
+                placeholder="https://www.facebook.com/代表者のユーザー名"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <p className="text-xs text-gray-400 mt-1">代表者の個人FacebookプロフィールページのURLを入力</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">WebサイトURL</label>
@@ -179,7 +237,7 @@ export default function LeadDetailPage({ params }: { params: { id: string } }) {
               ['電話番号', lead.phone],
               ['メール', lead.email],
               ['WebサイトURL', lead.website_url],
-              ['Facebook URL', lead.facebook_url],
+              ['代表者Facebook', lead.facebook_url],
               ['都道府県', lead.area_prefecture],
               ['市区町村', lead.area_city],
               ['カテゴリ', lead.category?.join(', ')],

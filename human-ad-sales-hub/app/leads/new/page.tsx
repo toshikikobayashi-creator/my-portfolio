@@ -84,10 +84,11 @@ export default function NewLeadPage() {
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Facebook URL</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">代表者 Facebook（個人アカウントURL）</label>
           <input value={form.facebook_url} onChange={(e) => set('facebook_url', e.target.value)}
-            placeholder="https://www.facebook.com/..."
+            placeholder="https://www.facebook.com/代表者のユーザー名"
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <p className="text-xs text-gray-400 mt-1">代表者の個人FacebookプロフィールページのURLを入力</p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>

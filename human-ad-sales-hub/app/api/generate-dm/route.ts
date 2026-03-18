@@ -114,14 +114,21 @@ Webサイト: ${website_url || '（未入力）'}
 
   } catch (err: unknown) {
     const error = err as { status?: number; message?: string }
+    console.error('DM生成エラー:', error?.status, error?.message)
     if (error?.status === 429) {
       return NextResponse.json(
         { error: 'APIが混み合っています。30秒後に再試行してください' },
         { status: 429 }
       )
     }
+    if (error?.status === 401) {
+      return NextResponse.json(
+        { error: 'APIキーが無効です。設定を確認してください' },
+        { status: 500 }
+      )
+    }
     return NextResponse.json(
-      { error: '一時的なエラーです。しばらく待って再試行してください' },
+      { error: `エラーが発生しました: ${error?.message ?? '不明なエラー'}` },
       { status: 500 }
     )
   }

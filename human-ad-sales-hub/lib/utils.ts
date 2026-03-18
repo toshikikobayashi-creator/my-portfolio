@@ -29,25 +29,35 @@ export function addDaysJST(date: Date, days: number): string {
 }
 
 /**
- * FacebookページURLをm.me形式に変換する
+ * Facebook個人アカウントURLをMessenger DM用URLに変換する
+ * 代表者の個人アカウントURL → 直接DMを開けるリンクに変換
  */
 export function toMessengerUrl(facebookUrl: string): { url: string; isDirect: boolean } {
   if (!facebookUrl) return { url: '', isDirect: false }
 
-  // 変換不可パターン
-  if (
-    facebookUrl.includes('profile.php') ||
-    facebookUrl.includes('/people/') ||
-    facebookUrl.includes('/groups/')
-  ) {
-    return { url: facebookUrl, isDirect: false }
-  }
-
   try {
-    // URLを正規化してページ名を抽出
+    // profile.php?id=XXXXXXX 形式（数字ID）→ m.me/XXXXXXX
+    const profileMatch = facebookUrl.match(/profile\.php\?id=(\d+)/)
+    if (profileMatch) {
+      return { url: `https://m.me/${profileMatch[1]}`, isDirect: true }
+    }
+
+    // /people/NAME/ID 形式 → m.me/ID
+    const peopleMatch = facebookUrl.match(/\/people\/[^/]+\/(\d+)/)
+    if (peopleMatch) {
+      return { url: `https://m.me/${peopleMatch[1]}`, isDirect: true }
+    }
+
+    // グループは対象外
+    if (facebookUrl.includes('/groups/')) {
+      return { url: facebookUrl, isDirect: false }
+    }
+
+    // facebook.com/username 形式 → m.me/username
     const normalized = facebookUrl
       .replace(/^https?:\/\/(www\.)?facebook\.com\//, '')
       .replace(/\/$/, '')
+      .split('?')[0]
 
     if (normalized && !normalized.includes('/')) {
       return { url: `https://m.me/${normalized}`, isDirect: true }

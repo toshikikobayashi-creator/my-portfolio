@@ -349,32 +349,77 @@ function DmForm() {
         </div>
       )}
 
-      {/* Facebook DM導線 */}
-      {selectedLead && (generatedMessage || manualMode) && (
+      {/* Facebook DM導線 - リード選択後すぐに表示 */}
+      {selectedLead && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <h3 className="font-medium text-blue-800 mb-2">📱 Facebookで送信</h3>
+          <h3 className="font-medium text-blue-800 mb-3">📱 代表者にコンタクト</h3>
           {fbInfo ? (
-            <a href={fbInfo.url} target="_blank" rel="noopener noreferrer">
-              <button className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors">
-                {fbInfo.isDirect ? '💬 FacebookでDMを開く' : '🔗 Facebookページを開く'}
-              </button>
-            </a>
+            // Facebook URL登録済み → 直接DMを開く
+            <button
+              onClick={() => window.open(fbInfo.url, '_blank')}
+              className="block w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors text-center mb-2"
+            >
+              💬 代表者にFacebook DMを送る
+            </button>
           ) : (
+            // Facebook URL未登録 → 複数の方法で検索
             <div className="space-y-2">
-              <p className="text-sm text-blue-700">Facebook未登録</p>
-              <a
-                href={`https://www.facebook.com/search/pages/?q=${encodeURIComponent(selectedLead.company_name)}`}
-                target="_blank" rel="noopener noreferrer"
+              <p className="text-xs text-blue-600 font-medium mb-2">
+                {selectedLead.contact_name
+                  ? `「${selectedLead.contact_name}」（${selectedLead.company_name}）を検索`
+                  : `「${selectedLead.company_name}」代表者を検索`}
+              </p>
+
+              {/* Facebook：名前＋会社名で精度UP */}
+              <button
+                onClick={() => {
+                  const q = selectedLead.contact_name
+                    ? `${selectedLead.contact_name} ${selectedLead.company_name}`
+                    : selectedLead.company_name
+                  window.open(`https://www.facebook.com/search/people?q=${encodeURIComponent(q)}`, '_blank')
+                }}
+                className="flex items-center gap-2 w-full bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm hover:bg-blue-700 transition-colors"
               >
-                <button className="w-full bg-blue-100 text-blue-700 py-2.5 rounded-lg text-sm hover:bg-blue-200 transition-colors">
-                  🔍 Facebookで検索する
-                </button>
-              </a>
+                <span className="text-base">📘</span>
+                <span>Facebookで人物検索（名前＋会社名）</span>
+              </button>
+
+              {/* Google：最も確実 */}
+              <button
+                onClick={() => {
+                  const q = selectedLead.contact_name
+                    ? `${selectedLead.contact_name} ${selectedLead.company_name} facebook`
+                    : `${selectedLead.company_name} 代表者 facebook`
+                  window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`, '_blank')
+                }}
+                className="flex items-center gap-2 w-full bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-base">🔍</span>
+                <span>Googleで検索（代表者名＋Facebook）</span>
+              </button>
+
+              {/* LinkedIn */}
+              <button
+                onClick={() => {
+                  const q = selectedLead.contact_name
+                    ? `${selectedLead.contact_name} ${selectedLead.company_name}`
+                    : selectedLead.company_name
+                  window.open(`https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(q)}`, '_blank')
+                }}
+                className="flex items-center gap-2 w-full bg-sky-700 text-white px-4 py-2.5 rounded-lg text-sm hover:bg-sky-800 transition-colors"
+              >
+                <span className="text-base">💼</span>
+                <span>LinkedInで人物検索</span>
+              </button>
+
+              <p className="text-xs text-blue-500 pt-1">※ 見つけたら代表者のFacebook URLをリード詳細に保存してください</p>
             </div>
           )}
-          <p className="text-xs text-blue-600 mt-2">
-            ※ 上でコピーしたDMを貼り付けて手動送信してください（自動送信は行いません）
-          </p>
+          {(generatedMessage || manualMode) && (
+            <p className="text-xs text-blue-600 mt-3 pt-2 border-t border-blue-200">
+              ※ 上でコピーしたDMを貼り付けて手動送信してください
+            </p>
+          )}
         </div>
       )}
     </div>
